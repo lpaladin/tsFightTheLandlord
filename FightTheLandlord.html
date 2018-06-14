@@ -1,0 +1,62 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta charset="utf-8" />
+	<title>FightTheLandlord</title>
+	<link rel="stylesheet" href="FightTheLandlord/app.css?3d211" />
+
+	<!-- <script src="javascripts/jquery-3.1.1.min.js"></script>
+	<script src="greensocks/TweenMax.min.js"></script>
+	<script src="/greensocks/TweenMax.min.js"></script> -->
+
+	<script src="/javascripts/jquery-3.1.1.min.js"></script>
+	<script src="player_api.js"></script>
+	<script src="FightTheLandlord/poker.min.js"></script>
+	<script src="FightTheLandlord/app.js?3d111111"></script>
+</head>
+<body>
+	<template id="player">
+		<section class="player">
+			<div class="deck-mask" data-id="info">
+				<div class="action">
+					<a class="btn pass" data-id="pass"><span>过</span></a><!--
+				 --><a class="btn submit" data-id="submit">
+						<figure class="hint">未选中牌时，点击可以自动跟牌</figure>
+						<span>出牌</span>
+					</a>
+				</div>
+				<ul class="info">
+					<!-- <figure class="avatar">
+						<img data-id="avatar" />
+					</figure> -->
+					<li class="title label-1"><span data-id="title">头衔
+					<li class="nick value-1"><span data-id="nick">姓名
+					<li class="label-2"><span>剩余牌数
+					<li class="value-2"><span class="value" data-id="deckLeft">0</span>
+				</div>
+			</div>
+		</section>
+	</template>
+	<button style="position: absolute; top: 0; right: 0; z-index: 99999" onclick="confirm('请确认下面的进度条是黄色，并且确实轮到你出牌了') && (game.players[infoProvider.getPlayerID()].enabled = true)">没有显示出牌按钮</button>
+	<div id="container"></div>
+	<div id="effect">
+		<figure id="fly">飞机系列（预期效果：向右飞动）</figure>
+		<figure id="sbomb">
+			<img class="bkg" src="FightTheLandlord/gold.png" />
+			<div class="text">重磅系列（预期效果：拆字砸落）</div>
+		</figure>
+		<figure id="bomb">
+			<img class="bkg" src="FightTheLandlord/gold.png" />
+			<div class="text">重磅系列（预期效果：拆字砸落）</div>
+		</figure>
+		<figure id="uncommon" class="super-shadow">非普通（预期效果：带背景放大展现）</figure>
+		<figure id="common">普通（预期效果：向中央滑动消失）</figure>
+		<figure id="prompt">提示信息（预期效果：右下角上滑）</figure>
+		<figure id="result">
+			<p class="result"></p>
+			<p class="reason"></p>
+		</figure>
+	</div>
+</body>
+</html>
