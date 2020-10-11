@@ -6,7 +6,8 @@ namespace Effects {
 		fly: null as JQuery,
 		prompt: null as JQuery,
 		sbomb: null as JQuery,
-		result: null as JQuery
+		result: null as JQuery,
+		call: null as JQuery
 	};
 	export function init() {
 		for (const id in controls)
@@ -72,12 +73,12 @@ namespace Effects {
 		tl.to(controls.prompt, 0.5, { opacity: 0 }, "+=2");
 		return tl;
 	}
-	export function common(playerid: number, message: string) {
+	function commonlyEffect(control: JQuery, playerid: number, message: string) {
 		const tl = new TimelineMax();
-		tl.add(Util.biDirConstSet(controls.common[0], "textContent", message));
+		tl.add(Util.biDirConstSet(control[0], "textContent", message));
 		if (infoProvider.getPlayerID() >= 0)
 			playerid -= infoProvider.getPlayerID();
-		tl.fromTo(controls.common, 0.3, {
+		tl.fromTo(control, 0.3, {
 			scale: 0.5,
 			opacity: 0,
 			x: Math.sin(Math.PI * 2 * playerid / 3) * GameElement.fieldRadius,
@@ -92,7 +93,7 @@ namespace Effects {
 			xPercent: "-50",
 			yPercent: "-50"
 		});
-		tl.to(controls.common, 0.3, {
+		tl.to(control, 0.3, {
 			scale: 1.5,
 			opacity: 0,
 			x: 0,
@@ -101,5 +102,12 @@ namespace Effects {
 			yPercent: "-50"
 		}, "+=1");
 		return tl;
+	}
+	export function common(playerid: number, message: string) {
+		return commonlyEffect(controls.common, playerid, message);
+	}
+
+	export function call(playerid: number, message: string) {
+		return commonlyEffect(controls.call, playerid, message);
 	}
 }

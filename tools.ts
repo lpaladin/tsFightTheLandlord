@@ -143,19 +143,7 @@ namespace Util {
 	}
 
 	export function biDirConstSet(obj: object, propName: string, to: (() => void) | any) {
-		let initial: any;
-		return TweenMax.to(dummy, 0.001, {
-			immediateRender: false,
-			onComplete: () => {
-				initial = obj[propName];
-				if (to instanceof Function)
-					obj[propName] = to();
-				else
-					obj[propName] = to;
-			},
-			onReverseComplete: () =>
-				obj[propName] = initial
-		});
+		return TweenMax.set(obj, { immediateRender: false, [propName]: to });
 	}
 
 	const constNode = document.createElement("p");

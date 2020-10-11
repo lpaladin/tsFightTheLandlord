@@ -197,7 +197,7 @@ body {
 			}
 		}
 	
-		.action {
+		.action, .call-action {
 			pointer-events: auto;
 			z-index: $ui-base-z + 1;
 			bottom: 100%;
@@ -312,7 +312,7 @@ body {
 			}
 		}
 
-		&:nth-child(1) {
+		&.landlord {
 			 .label-1 {
 				 background-color: #7b2b2b !important;
 			 }
@@ -343,6 +343,10 @@ body {
 			.card:hover {
 				box-shadow: 0 0 1em aqua;
 			}
+		}
+
+		&.call-enabled .action {
+			display: inline-block;
 		}
 	}
 

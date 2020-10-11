@@ -7,7 +7,8 @@ var Effects;
         fly: null,
         prompt: null,
         sbomb: null,
-        result: null
+        result: null,
+        call: null
     };
     function init() {
         for (var id in controls)
@@ -74,12 +75,12 @@ var Effects;
         return tl;
     }
     Effects.prompt = prompt;
-    function common(playerid, message) {
+    function commonlyEffect(control, playerid, message) {
         var tl = new TimelineMax();
-        tl.add(Util.biDirConstSet(controls.common[0], "textContent", message));
+        tl.add(Util.biDirConstSet(control[0], "textContent", message));
         if (infoProvider.getPlayerID() >= 0)
             playerid -= infoProvider.getPlayerID();
-        tl.fromTo(controls.common, 0.3, {
+        tl.fromTo(control, 0.3, {
             scale: 0.5,
             opacity: 0,
             x: Math.sin(Math.PI * 2 * playerid / 3) * GameElement.fieldRadius,
@@ -94,7 +95,7 @@ var Effects;
             xPercent: "-50",
             yPercent: "-50"
         });
-        tl.to(controls.common, 0.3, {
+        tl.to(control, 0.3, {
             scale: 1.5,
             opacity: 0,
             x: 0,
@@ -104,7 +105,14 @@ var Effects;
         }, "+=1");
         return tl;
     }
+    function common(playerid, message) {
+        return commonlyEffect(controls.common, playerid, message);
+    }
     Effects.common = common;
+    function call(playerid, message) {
+        return commonlyEffect(controls.call, playerid, message);
+    }
+    Effects.call = call;
 })(Effects || (Effects = {}));
 var GameElement;
 (function (GameElement) {
@@ -153,7 +161,11 @@ var GameElement;
                 pass: null,
                 title: null,
                 avatar: null,
-                nick: null
+                nick: null,
+                call0: null,
+                call1: null,
+                call2: null,
+                call3: null
             };
             this._enabled = false;
             this.deckLastLength = 0;
@@ -175,10 +187,32 @@ var GameElement;
                 if (game.trySubmit([]))
                     _this.enabled = false;
             });
-            this.controls.title.text(GameElement.playerTitles[playerid]);
+            var _loop_1 = function (i) {
+                this_1.controls["call" + i].click(function () {
+                    if (game.trySubmit(i))
+                        _this.callEnabled = false;
+                });
+            };
+            var this_1 = this;
+            for (var i = 0; i < 4; i++) {
+                _loop_1(i);
+            }
             if (infoProvider.getPlayerNames())
                 this.controls.nick.text(infoProvider.getPlayerNames()[playerid].name);
         }
+        Player.prototype.updateTitle = function (landlord) {
+            var to = landlord === undefined ? "???" : GameElement.playerTitles[(this.playerid + 3 - landlord) % 3];
+            if (GameElement.tl) {
+                GameElement.tl.add(Util.biDirConstSet(this.controls.title, "textContent", to));
+                if (landlord === this.playerid)
+                    GameElement.tl.set(this.controls.info, { className: "+=landlord" });
+            }
+            else {
+                this.controls.title.text(to);
+                if (landlord === this.playerid)
+                    this.controls.info.addClass("landlord");
+            }
+        };
         Player.prototype.clearBuffer = function () {
             // 清空上次自己出的牌
             Util.cat(this.disposedCards, this.playedCards);
@@ -223,6 +257,17 @@ var GameElement;
                     this.$visual.addClass("visible");
                 else
                     this.$visual.removeClass("visible");
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Player.prototype, "callEnabled", {
+            get: function () { return this.$visual.hasClass("call-enabled"); },
+            set: function (to) {
+                if (to)
+                    this.$visual.addClass("call-enabled");
+                else
+                    this.$visual.removeClass("call-enabled");
             },
             enumerable: true,
             configurable: true
@@ -547,6 +592,7 @@ var GameElement;
 var Game = /** @class */ (function () {
     function Game() {
         var _this = this;
+        this.landlord = undefined;
         this.controls = {
             container: null
         };
@@ -627,6 +673,7 @@ var Game = /** @class */ (function () {
         }
     }
     Game.prototype.parseLog = function (display) {
+        console.log(display);
         if ("event" in display) {
             this.prepareTL();
             if (display.event.player === -1)
@@ -678,25 +725,27 @@ var Game = /** @class */ (function () {
             if ("0" in display) {
                 var err = Util.translateError[display.errorInfo];
                 if (err)
-                    err = GameElement.playerTitles[display.event.player] + err;
+                    err = this.players[display.event.player].controls.title.text() + err;
                 else
                     err = "游戏结束";
-                GameElement.tl.add(Effects.result(display[0] > display[1] ? "地主胜利" : "农民胜利", err));
+                GameElement.tl.add(Effects.result(display[this.landlord] > display[(this.landlord + 1) % 3] ? "地主胜利" : "农民胜利", err));
             }
             return this.finalizeTL();
         }
-        else if ("allocation" in display) {
+        else if ("landlord" in display) {
             this.prepareTL(0);
+            this.landlord = display.landlord;
             for (var i = 0; i < this.players.length; i++)
                 for (var _b = 0, _c = display.allocation[i]; _b < _c.length; _b++) {
                     var card = _c[_b];
                     var c = GameElement.Card.get(card);
                     if (display.publiccard.indexOf(card) >= 0) {
                         c.publicCard = true;
-                        if (infoProvider.getPlayerID() !== 0)
+                        if (infoProvider.getPlayerID() !== this.landlord)
                             c.revealed = true;
                     }
                     this.players[i].addCard(c);
+                    this.players[i].updateTitle(display.landlord);
                 }
             var currTL = this.finalizeTL();
             for (var _d = 0, _e = this.players; _d < _e.length; _d++) {
@@ -800,7 +849,14 @@ var Game = /** @class */ (function () {
 }());
 var game;
 $(function () {
-    game = new Game();
+    try {
+        game = new Game();
+    }
+    catch (ex) {
+        parent["Botzone"].alert(ex);
+        console.error(ex);
+        parent["$"]("#loading").fadeOut();
+    }
 });
 var Logic;
 (function (Logic) {
@@ -883,7 +939,7 @@ var Logic;
                             break;
                     var isSequential = _this.comboInfo.type.indexOf("顺") !== -1 ||
                         _this.comboInfo.type.indexOf("飞机") !== -1;
-                    for (var i = 1;; i++) {
+                    for (var i = 1;; i++) { // 增大多少
                         var j = void 0;
                         for (j = 0; j < mainPackCount; j++) {
                             var order = _this.bundles[j].key + i;
@@ -930,14 +986,14 @@ var Logic;
                 if (result)
                     return result;
             }
-            var _loop_1 = function (i) {
+            var _loop_2 = function (i) {
                 if (counts[i] === 4)
                     return { value: new CardCombo(Logic.SUITS.map(function (s) { return [s, Logic.POINTS[i]]; })) };
             };
             // 实在找不到啊
             // 最后看一下能不能炸吧
             for (var i = 0; i < ORDER_LJOKER; i++) {
-                var state_1 = _loop_1(i);
+                var state_1 = _loop_2(i);
                 if (typeof state_1 === "object")
                     return state_1.value;
             }
@@ -1188,20 +1244,8 @@ var Util;
     }
     Util.shake = shake;
     function biDirConstSet(obj, propName, to) {
-        var initial;
-        return TweenMax.to(dummy, 0.001, {
-            immediateRender: false,
-            onComplete: function () {
-                initial = obj[propName];
-                if (to instanceof Function)
-                    obj[propName] = to();
-                else
-                    obj[propName] = to;
-            },
-            onReverseComplete: function () {
-                return obj[propName] = initial;
-            }
-        });
+        var _a;
+        return TweenMax.set(obj, (_a = { immediateRender: false }, _a[propName] = to, _a));
     }
     Util.biDirConstSet = biDirConstSet;
     var constNode = document.createElement("p");

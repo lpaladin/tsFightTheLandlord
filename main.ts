@@ -1,6 +1,7 @@
-interface FirstTurnDisplayLog {
+interface FirstTurnsDisplayLog {
 	allocation: number[][];
 	publiccard: number[];
+	landlord?: number;
 }
 interface DisplayLog {
 	event: {
@@ -16,6 +17,7 @@ interface DisplayLog {
 // TODO：tweencontentasnumber在页面ajaxload回来后会出现鬼畜的效果……
 class Game {
 	public players: GameElement.Player[];
+	public landlord: number | undefined = undefined;
 	public controls = {
 		container: null as JQuery
 	};
@@ -90,7 +92,8 @@ class Game {
 			this.players[0].enabled = this.players[0].visible = true;
 		}
 	}
-	public parseLog(display: FirstTurnDisplayLog | DisplayLog) {
+	public parseLog(display: FirstTurnsDisplayLog | DisplayLog) {
+		console.log(display)
 		if ("event" in display) {
 			this.prepareTL();
 			if (display.event.player === -1)
@@ -140,23 +143,25 @@ class Game {
 			if ("0" in display) {
 				let err = Util.translateError[display.errorInfo];
 				if (err)
-					err = GameElement.playerTitles[display.event.player] + err;
+					err = this.players[display.event.player].controls.title.text() + err;
 				else
 					err = "游戏结束";
-				GameElement.tl.add(Effects.result(display[0] > display[1] ? "地主胜利" : "农民胜利", err));
+				GameElement.tl.add(Effects.result(display[this.landlord] > display[(this.landlord + 1) % 3] ? "地主胜利" : "农民胜利", err));
 			}
 			return this.finalizeTL();
-		} else if ("allocation" in display) {
+		} else if ("landlord" in display) {
 			this.prepareTL(0);
+			this.landlord = display.landlord;
 			for (let i = 0; i < this.players.length; i++)
 				for (const card of display.allocation[i]) {
 					const c = GameElement.Card.get(card);
 					if (display.publiccard.indexOf(card) >= 0) {
 						c.publicCard = true;
-						if (infoProvider.getPlayerID() !== 0)
+						if (infoProvider.getPlayerID() !== this.landlord)
 							c.revealed = true;
 					}
 					this.players[i].addCard(c);
+					this.players[i].updateTitle(display.landlord);
 				}
 			const currTL = this.finalizeTL();
 			for (const p of this.players)
@@ -252,5 +257,11 @@ class Game {
 
 let game: Game;
 $(() => {
-	game = new Game();
+	try {
+		game = new Game();
+	} catch (ex) {
+		parent["Botzone"].alert(ex);
+		console.error(ex);
+		parent["$"]("#loading").fadeOut();
+	}
 });

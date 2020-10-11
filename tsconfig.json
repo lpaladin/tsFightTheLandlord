@@ -2,7 +2,7 @@
     "compilerOptions": {
         "target": "ES5",
         "module": "none",
-        "outFile": "FightTheLandlord/app.js",
+        "outFile": "FightTheLandlord2/app.js",
         "watch": true
     },
     "exclude": [

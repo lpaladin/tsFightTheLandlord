@@ -48,7 +48,11 @@ namespace GameElement {
 			pass: null as JQuery,
 			title: null as JQuery,
 			avatar: null as JQuery,
-			nick: null as JQuery
+			nick: null as JQuery,
+			call0: null as JQuery,
+			call1: null as JQuery,
+			call2: null as JQuery,
+			call3: null as JQuery
 		};
 		private _enabled = false;
 		private width: number;
@@ -73,9 +77,26 @@ namespace GameElement {
 				if (game.trySubmit([]))
 					this.enabled = false;
 			});
-			this.controls.title.text(playerTitles[playerid]);
+			for (let i = 0; i < 4; i++) {
+				this.controls["call" + i].click(() => {
+					if (game.trySubmit(i))
+						this.callEnabled = false;
+				});
+			}
 			if (infoProvider.getPlayerNames())
 				this.controls.nick.text(infoProvider.getPlayerNames()[playerid].name);
+		}
+		public updateTitle(landlord: number) {
+			const to = landlord === undefined ? "???" : playerTitles[(this.playerid + 3 - landlord) % 3];
+			if (tl) {
+				tl.add(Util.biDirConstSet(this.controls.title, "textContent", to));
+				if (landlord === this.playerid)
+					tl.set(this.controls.info, { className: "+=landlord" });
+			} else {
+				this.controls.title.text(to);
+				if (landlord === this.playerid)
+					this.controls.info.addClass("landlord");
+			}
 		}
 		public clearBuffer() {
 			// 清空上次自己出的牌
@@ -114,6 +135,13 @@ namespace GameElement {
 				this.$visual.addClass("visible");
 			else
 				this.$visual.removeClass("visible");
+		}
+		public get callEnabled() { return this.$visual.hasClass("call-enabled"); }
+		public set callEnabled(to) {
+			if (to)
+				this.$visual.addClass("call-enabled");
+			else
+				this.$visual.removeClass("call-enabled");
 		}
 		public get enabled() { return this._enabled; }
 		public set enabled(to) {

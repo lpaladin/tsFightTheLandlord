@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8" />
 	<title>FightTheLandlord</title>
-	<link rel="stylesheet" href="FightTheLandlord/app.css?3d211" />
+	<link rel="stylesheet" href="FightTheLandlord2/app.css?3d211" />
 
 	<!-- <script src="javascripts/jquery-3.1.1.min.js"></script>
 	<script src="greensocks/TweenMax.min.js"></script>
@@ -12,8 +12,8 @@
 
 	<script src="/javascripts/jquery-3.1.1.min.js"></script>
 	<script src="player_api.js"></script>
-	<script src="FightTheLandlord/poker.min.js"></script>
-	<script src="FightTheLandlord/app.js?3d111111"></script>
+	<script src="FightTheLandlord2/poker.min.js"></script>
+	<script src="FightTheLandlord2/app.js?3d111111"></script>
 </head>
 <body>
 	<template id="player">
@@ -26,11 +26,17 @@
 						<span>出牌</span>
 					</a>
 				</div>
+				<div class="call-action">
+					<a class="btn pass" data-id="call0"><span>不叫地主</span></a><!--
+				 --><a class="btn submit" data-id="call1"><span>叫1分</span></a><!--
+				 --><a class="btn submit" data-id="call2"><span>叫2分</span></a><!--
+				 --><a class="btn submit" data-id="call3"><span>叫3分</span></a>
+				</div>
 				<ul class="info">
 					<!-- <figure class="avatar">
 						<img data-id="avatar" />
 					</figure> -->
-					<li class="title label-1"><span data-id="title">头衔
+					<li class="title label-1"><span data-id="title">???
 					<li class="nick value-1"><span data-id="nick">姓名
 					<li class="label-2"><span>剩余牌数
 					<li class="value-2"><span class="value" data-id="deckLeft">0</span>
@@ -52,6 +58,7 @@
 		</figure>
 		<figure id="uncommon" class="super-shadow">非普通（预期效果：带背景放大展现）</figure>
 		<figure id="common">普通（预期效果：向中央滑动消失）</figure>
+		<figure id="call">叫地主（预期效果：向中央滑动消失）</figure>
 		<figure id="prompt">提示信息（预期效果：右下角上滑）</figure>
 		<figure id="result">
 			<p class="result"></p>
