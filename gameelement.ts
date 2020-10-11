@@ -111,7 +111,7 @@ namespace GameElement {
 		}
 		public bringToTop() {
 			if (tl)
-				tl.add(Util.biDirConstSet(this.$visual[0].style, "zIndex", zIndexMax++), tlHead);
+				tl.add(Util.biDirConstSet(this.$visual[0], "zIndex", zIndexMax++), tlHead);
 			else
 				this.$visual.css("zIndex", zIndexMax++);
 		}
@@ -279,7 +279,7 @@ namespace GameElement {
 					}
 
 					if (tl)
-						tl.add(Util.biDirConstSet(this.$visual[0].style, "zIndex", this.nth + 1), tlHead);
+						tl.add(Util.biDirConstSet(this.$visual[0], "zIndex", (this.nth || 0) + 1), tlHead);
 					else
 						this.$visual.css("zIndex", this.nth + 1);
 
@@ -356,10 +356,12 @@ namespace GameElement {
 		}
 		public get publicCard() { return this.$visual.hasClass("public-card"); }
 		public set publicCard(to) {
-			if (to)
+			if (to) {
 				this.$visual.addClass("public-card");
-			else
+				TweenMax.set(this.$visual, { opacity: 0 });
+			} else
 				this.$visual.removeClass("public-card");
+			this.updateTransform();
 		}
 		public get revealed() { return this.$visual.hasClass("revealed"); }
 		public set revealed(to) {

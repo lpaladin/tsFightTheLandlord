@@ -20,6 +20,7 @@ class Game {
 	public players: GameElement.Player[];
 	private landlord: number | undefined = undefined;
 	private publiccards: number[] | undefined = undefined;
+	private bidCalled = [false, false, false];
 	private allocationReceived = false;
 	public controls = {
 		container: null as JQuery
@@ -57,7 +58,6 @@ class Game {
 			const tl = this.finalizeTL();
 
 			infoProvider.v2.setRequestCallback(req => {
-				console.log(req);
 				if ("bid" in req) {
 					this.players[infoProvider.getPlayerID()].callEnabled = true;
 				} else {
@@ -171,26 +171,33 @@ class Game {
 			return currTL;
 		} else if ("landlord" in display && this.landlord === undefined) {
 			this.prepareTL();
+			this.showBidEffect(display.bid);
+			GameElement.tlHead = 1.6;
 			this.landlord = display.landlord;
 			for (let i = 0; i < this.players.length; i++)
 				this.players[i].updateTitle(display.landlord);
 			
 			for (const publiccard of this.publiccards) {
 				const c = GameElement.Card.get(publiccard);
-				c.publicCard = true;
 				this.players[this.landlord].addCard(c);
+				c.publicCard = true;
 				if (infoProvider.getPlayerID() !== this.landlord)
 					c.revealed = true;
 			}
-			const currTL = this.finalizeTL();
-			for (const p of this.players)
-				currTL.fromTo(p.controls.info, 0.4, { opacity: 0 }, { opacity: 1 });
-			return currTL;
+			return this.finalizeTL();
 		} else if ("bid" in display) {
 			this.prepareTL();
-			const idx = display.bid.length - 1;
-			this.addToTL(Effects.call(idx, GameElement.calls[display.bid[idx]]));
+			this.showBidEffect(display.bid);
 			return this.finalizeTL();
+		}
+	}
+	private showBidEffect(bid: number[]) {
+		const idx = bid.length - 1;
+		if (!this.bidCalled[idx]) {
+			this.bidCalled[idx] = true;
+			for (const p of this.players)
+				GameElement.tl.add(Util.biDirConstSet(p, "active", p.playerid === idx));
+			this.addToTL(Effects.call(idx, GameElement.calls[bid[idx]]));
 		}
 	}
 	public callBid(bid: number) {
@@ -226,7 +233,7 @@ class Game {
 				return false;
 			}
 			infoProvider.notifyPlayerMove([]);
-			this.parseLog({ event: { player: infoProvider.getPlayerID(), action: [] }});
+			// this.parseLog({ event: { player: infoProvider.getPlayerID(), action: [] }});
 			return true;
 		}
 
@@ -248,7 +255,7 @@ class Game {
 		}
 		const action = cards.map(c => c.cardid);
 		infoProvider.notifyPlayerMove(action);
-		this.parseLog({ event: { player: infoProvider.getPlayerID(), action }});
+		// this.parseLog({ event: { player: infoProvider.getPlayerID(), action }});
 		return true;
 	}
 	public prepareTL(delay = 0.8, time = 0.3) {

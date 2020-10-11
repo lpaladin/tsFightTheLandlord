@@ -124,6 +124,12 @@ body {
 		text-shadow: black 0 1px, black 1px 0, black -1px 0, black 0 -1px, black 0 0 1em;
 		font-size: 2em;
 	}
+
+	#call {
+		color: gold;
+		text-shadow: black 0 1px, black 1px 0, black -1px 0, black 0 -1px, gold 0 0 1em;
+		font-size: 2em;
+	}
 }
 
 #container {
@@ -295,10 +301,12 @@ body {
 
 				.label-1 {
 					background-color: #337ab7;
+					transition: background-color 0.5s;
 				}
 
 				.value-1 {
 					background-color: #88ccee;
+					transition: background-color 0.5s;
 				}
 
 				.label-2 {

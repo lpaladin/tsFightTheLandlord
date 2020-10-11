@@ -225,7 +225,7 @@ var GameElement;
         };
         Player.prototype.bringToTop = function () {
             if (GameElement.tl)
-                GameElement.tl.add(Util.biDirConstSet(this.$visual[0].style, "zIndex", zIndexMax++), GameElement.tlHead);
+                GameElement.tl.add(Util.biDirConstSet(this.$visual[0], "zIndex", zIndexMax++), GameElement.tlHead);
             else
                 this.$visual.css("zIndex", zIndexMax++);
         };
@@ -409,7 +409,7 @@ var GameElement;
                         _this.lastCardHeight = cardHeight;
                     }
                     if (GameElement.tl)
-                        GameElement.tl.add(Util.biDirConstSet(_this.$visual[0].style, "zIndex", _this.nth + 1), GameElement.tlHead);
+                        GameElement.tl.add(Util.biDirConstSet(_this.$visual[0], "zIndex", (_this.nth || 0) + 1), GameElement.tlHead);
                     else
                         _this.$visual.css("zIndex", _this.nth + 1);
                     var targetProps = {};
@@ -493,10 +493,13 @@ var GameElement;
         Object.defineProperty(Card.prototype, "publicCard", {
             get: function () { return this.$visual.hasClass("public-card"); },
             set: function (to) {
-                if (to)
+                if (to) {
                     this.$visual.addClass("public-card");
+                    TweenMax.set(this.$visual, { opacity: 0 });
+                }
                 else
                     this.$visual.removeClass("public-card");
+                this.updateTransform();
             },
             enumerable: true,
             configurable: true
@@ -598,6 +601,7 @@ var Game = /** @class */ (function () {
         var _this = this;
         this.landlord = undefined;
         this.publiccards = undefined;
+        this.bidCalled = [false, false, false];
         this.allocationReceived = false;
         this.controls = {
             container: null
@@ -635,7 +639,6 @@ var Game = /** @class */ (function () {
             }
             var tl = this.finalizeTL();
             infoProvider.v2.setRequestCallback(function (req) {
-                console.log(req);
                 if ("bid" in req) {
                     _this.players[infoProvider.getPlayerID()].callEnabled = true;
                 }
@@ -763,29 +766,36 @@ var Game = /** @class */ (function () {
         }
         else if ("landlord" in display && this.landlord === undefined) {
             this.prepareTL();
+            this.showBidEffect(display.bid);
+            GameElement.tlHead = 1.6;
             this.landlord = display.landlord;
             for (var i = 0; i < this.players.length; i++)
                 this.players[i].updateTitle(display.landlord);
             for (var _f = 0, _g = this.publiccards; _f < _g.length; _f++) {
                 var publiccard = _g[_f];
                 var c = GameElement.Card.get(publiccard);
-                c.publicCard = true;
                 this.players[this.landlord].addCard(c);
+                c.publicCard = true;
                 if (infoProvider.getPlayerID() !== this.landlord)
                     c.revealed = true;
             }
-            var currTL = this.finalizeTL();
-            for (var _h = 0, _j = this.players; _h < _j.length; _h++) {
-                var p = _j[_h];
-                currTL.fromTo(p.controls.info, 0.4, { opacity: 0 }, { opacity: 1 });
-            }
-            return currTL;
+            return this.finalizeTL();
         }
         else if ("bid" in display) {
             this.prepareTL();
-            var idx = display.bid.length - 1;
-            this.addToTL(Effects.call(idx, GameElement.calls[display.bid[idx]]));
+            this.showBidEffect(display.bid);
             return this.finalizeTL();
+        }
+    };
+    Game.prototype.showBidEffect = function (bid) {
+        var idx = bid.length - 1;
+        if (!this.bidCalled[idx]) {
+            this.bidCalled[idx] = true;
+            for (var _i = 0, _a = this.players; _i < _a.length; _i++) {
+                var p = _a[_i];
+                GameElement.tl.add(Util.biDirConstSet(p, "active", p.playerid === idx));
+            }
+            this.addToTL(Effects.call(idx, GameElement.calls[bid[idx]]));
         }
     };
     Game.prototype.callBid = function (bid) {
@@ -823,7 +833,7 @@ var Game = /** @class */ (function () {
                 return false;
             }
             infoProvider.notifyPlayerMove([]);
-            this.parseLog({ event: { player: infoProvider.getPlayerID(), action: [] } });
+            // this.parseLog({ event: { player: infoProvider.getPlayerID(), action: [] }});
             return true;
         }
         var newCombo = new Logic.CardCombo(cards.map(function (c) { return c.card; }));
@@ -844,7 +854,7 @@ var Game = /** @class */ (function () {
         }
         var action = cards.map(function (c) { return c.cardid; });
         infoProvider.notifyPlayerMove(action);
-        this.parseLog({ event: { player: infoProvider.getPlayerID(), action: action } });
+        // this.parseLog({ event: { player: infoProvider.getPlayerID(), action }});
         return true;
     };
     Game.prototype.prepareTL = function (delay, time) {
