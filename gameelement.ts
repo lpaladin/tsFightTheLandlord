@@ -2,6 +2,9 @@ namespace GameElement {
 	export const playerTitles = [
 		"地主", "农民甲", "农民乙"
 	];
+	export const calls = [
+		"不叫", "叫1分", "叫2分", "叫3分"
+	];
 	export let fieldRadius: number;
 	let cardHeight: number;
 	let cardWidth: number;
@@ -79,23 +82,25 @@ namespace GameElement {
 			});
 			for (let i = 0; i < 4; i++) {
 				this.controls["call" + i].click(() => {
-					if (game.trySubmit(i))
-						this.callEnabled = false;
+					game.callBid(i);
+					this.callEnabled = false;
 				});
 			}
 			if (infoProvider.getPlayerNames())
 				this.controls.nick.text(infoProvider.getPlayerNames()[playerid].name);
+			
+			this.updateTitle(undefined);
 		}
 		public updateTitle(landlord: number) {
-			const to = landlord === undefined ? "???" : playerTitles[(this.playerid + 3 - landlord) % 3];
+			const to = landlord === undefined ? (this.playerid + 1) + "号玩家" : playerTitles[(this.playerid + 3 - landlord) % 3];
 			if (tl) {
 				tl.add(Util.biDirConstSet(this.controls.title, "textContent", to));
 				if (landlord === this.playerid)
-					tl.set(this.controls.info, { className: "+=landlord" });
+					tl.set(this.$visual, { className: "+=landlord" });
 			} else {
 				this.controls.title.text(to);
 				if (landlord === this.playerid)
-					this.controls.info.addClass("landlord");
+					this.$visual.addClass("landlord");
 			}
 		}
 		public clearBuffer() {

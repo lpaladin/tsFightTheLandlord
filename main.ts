@@ -2,6 +2,7 @@ interface FirstTurnsDisplayLog {
 	allocation: number[][];
 	publiccard: number[];
 	landlord?: number;
+	bid: number[];
 }
 interface DisplayLog {
 	event: {
@@ -17,7 +18,9 @@ interface DisplayLog {
 // TODO：tweencontentasnumber在页面ajaxload回来后会出现鬼畜的效果……
 class Game {
 	public players: GameElement.Player[];
-	public landlord: number | undefined = undefined;
+	private landlord: number | undefined = undefined;
+	private publiccards: number[] | undefined = undefined;
+	private allocationReceived = false;
 	public controls = {
 		container: null as JQuery
 	};
@@ -54,7 +57,12 @@ class Game {
 			const tl = this.finalizeTL();
 
 			infoProvider.v2.setRequestCallback(req => {
-				const p = this.players[infoProvider.getPlayerID()].enabled = true;
+				console.log(req);
+				if ("bid" in req) {
+					this.players[infoProvider.getPlayerID()].callEnabled = true;
+				} else {
+					this.players[infoProvider.getPlayerID()].enabled = true;
+				}
 				return null;
 			});
 			infoProvider.v2.setDisplayCallback(this.parseLog.bind(this));
@@ -93,7 +101,6 @@ class Game {
 		}
 	}
 	public parseLog(display: FirstTurnsDisplayLog | DisplayLog) {
-		console.log(display)
 		if ("event" in display) {
 			this.prepareTL();
 			if (display.event.player === -1)
@@ -141,33 +148,53 @@ class Game {
 			}
 			this.players[(display.event.player + 1) % 3].clearBuffer();
 			if ("0" in display) {
+				const landlordScore = display[this.landlord];
+				const farmerScore = display[(this.landlord + 1) % 3];
 				let err = Util.translateError[display.errorInfo];
 				if (err)
 					err = this.players[display.event.player].controls.title.text() + err;
 				else
-					err = "游戏结束";
-				GameElement.tl.add(Effects.result(display[this.landlord] > display[(this.landlord + 1) % 3] ? "地主胜利" : "农民胜利", err));
+					err = "游戏结束，" + (landlordScore > farmerScore ? `地主从农民处赢得 ${landlordScore} 分` : `每个农民从地主处赢得 ${farmerScore} 分`);
+				GameElement.tl.add(Effects.result(landlordScore > farmerScore ? "地主胜利" : "农民胜利", err));
 			}
 			return this.finalizeTL();
-		} else if ("landlord" in display) {
+		} else if ("allocation" in display && !this.allocationReceived) {
+			this.allocationReceived = true;
 			this.prepareTL(0);
-			this.landlord = display.landlord;
 			for (let i = 0; i < this.players.length; i++)
-				for (const card of display.allocation[i]) {
-					const c = GameElement.Card.get(card);
-					if (display.publiccard.indexOf(card) >= 0) {
-						c.publicCard = true;
-						if (infoProvider.getPlayerID() !== this.landlord)
-							c.revealed = true;
-					}
-					this.players[i].addCard(c);
-					this.players[i].updateTitle(display.landlord);
-				}
+				for (const card of display.allocation[i])
+					this.players[i].addCard(GameElement.Card.get(card));
+			this.publiccards = display.publiccard;
 			const currTL = this.finalizeTL();
 			for (const p of this.players)
 				currTL.fromTo(p.controls.info, 0.4, { opacity: 0 }, { opacity: 1 });
 			return currTL;
+		} else if ("landlord" in display && this.landlord === undefined) {
+			this.prepareTL();
+			this.landlord = display.landlord;
+			for (let i = 0; i < this.players.length; i++)
+				this.players[i].updateTitle(display.landlord);
+			
+			for (const publiccard of this.publiccards) {
+				const c = GameElement.Card.get(publiccard);
+				c.publicCard = true;
+				this.players[this.landlord].addCard(c);
+				if (infoProvider.getPlayerID() !== this.landlord)
+					c.revealed = true;
+			}
+			const currTL = this.finalizeTL();
+			for (const p of this.players)
+				currTL.fromTo(p.controls.info, 0.4, { opacity: 0 }, { opacity: 1 });
+			return currTL;
+		} else if ("bid" in display) {
+			this.prepareTL();
+			const idx = display.bid.length - 1;
+			this.addToTL(Effects.call(idx, GameElement.calls[display.bid[idx]]));
+			return this.finalizeTL();
 		}
+	}
+	public callBid(bid: number) {
+		infoProvider.notifyPlayerMove(bid);
 	}
 	public trySubmit(cards: GameElement.Card[]) {
 		if (!cards) {

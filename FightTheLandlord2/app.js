@@ -119,6 +119,9 @@ var GameElement;
     GameElement.playerTitles = [
         "地主", "农民甲", "农民乙"
     ];
+    GameElement.calls = [
+        "不叫", "叫1分", "叫2分", "叫3分"
+    ];
     var cardHeight;
     var cardWidth;
     var cardGap;
@@ -189,8 +192,8 @@ var GameElement;
             });
             var _loop_1 = function (i) {
                 this_1.controls["call" + i].click(function () {
-                    if (game.trySubmit(i))
-                        _this.callEnabled = false;
+                    game.callBid(i);
+                    _this.callEnabled = false;
                 });
             };
             var this_1 = this;
@@ -199,18 +202,19 @@ var GameElement;
             }
             if (infoProvider.getPlayerNames())
                 this.controls.nick.text(infoProvider.getPlayerNames()[playerid].name);
+            this.updateTitle(undefined);
         }
         Player.prototype.updateTitle = function (landlord) {
-            var to = landlord === undefined ? "???" : GameElement.playerTitles[(this.playerid + 3 - landlord) % 3];
+            var to = landlord === undefined ? (this.playerid + 1) + "号玩家" : GameElement.playerTitles[(this.playerid + 3 - landlord) % 3];
             if (GameElement.tl) {
                 GameElement.tl.add(Util.biDirConstSet(this.controls.title, "textContent", to));
                 if (landlord === this.playerid)
-                    GameElement.tl.set(this.controls.info, { className: "+=landlord" });
+                    GameElement.tl.set(this.$visual, { className: "+=landlord" });
             }
             else {
                 this.controls.title.text(to);
                 if (landlord === this.playerid)
-                    this.controls.info.addClass("landlord");
+                    this.$visual.addClass("landlord");
             }
         };
         Player.prototype.clearBuffer = function () {
@@ -593,6 +597,8 @@ var Game = /** @class */ (function () {
     function Game() {
         var _this = this;
         this.landlord = undefined;
+        this.publiccards = undefined;
+        this.allocationReceived = false;
         this.controls = {
             container: null
         };
@@ -629,7 +635,13 @@ var Game = /** @class */ (function () {
             }
             var tl = this.finalizeTL();
             infoProvider.v2.setRequestCallback(function (req) {
-                var p = _this.players[infoProvider.getPlayerID()].enabled = true;
+                console.log(req);
+                if ("bid" in req) {
+                    _this.players[infoProvider.getPlayerID()].callEnabled = true;
+                }
+                else {
+                    _this.players[infoProvider.getPlayerID()].enabled = true;
+                }
                 return null;
             });
             infoProvider.v2.setDisplayCallback(this.parseLog.bind(this));
@@ -673,7 +685,6 @@ var Game = /** @class */ (function () {
         }
     }
     Game.prototype.parseLog = function (display) {
-        console.log(display);
         if ("event" in display) {
             this.prepareTL();
             if (display.event.player === -1)
@@ -723,30 +734,26 @@ var Game = /** @class */ (function () {
             }
             this.players[(display.event.player + 1) % 3].clearBuffer();
             if ("0" in display) {
+                var landlordScore = display[this.landlord];
+                var farmerScore = display[(this.landlord + 1) % 3];
                 var err = Util.translateError[display.errorInfo];
                 if (err)
                     err = this.players[display.event.player].controls.title.text() + err;
                 else
-                    err = "游戏结束";
-                GameElement.tl.add(Effects.result(display[this.landlord] > display[(this.landlord + 1) % 3] ? "地主胜利" : "农民胜利", err));
+                    err = "游戏结束，" + (landlordScore > farmerScore ? "\u5730\u4E3B\u4ECE\u519C\u6C11\u5904\u8D62\u5F97 " + landlordScore + " \u5206" : "\u6BCF\u4E2A\u519C\u6C11\u4ECE\u5730\u4E3B\u5904\u8D62\u5F97 " + farmerScore + " \u5206");
+                GameElement.tl.add(Effects.result(landlordScore > farmerScore ? "地主胜利" : "农民胜利", err));
             }
             return this.finalizeTL();
         }
-        else if ("landlord" in display) {
+        else if ("allocation" in display && !this.allocationReceived) {
+            this.allocationReceived = true;
             this.prepareTL(0);
-            this.landlord = display.landlord;
             for (var i = 0; i < this.players.length; i++)
                 for (var _b = 0, _c = display.allocation[i]; _b < _c.length; _b++) {
                     var card = _c[_b];
-                    var c = GameElement.Card.get(card);
-                    if (display.publiccard.indexOf(card) >= 0) {
-                        c.publicCard = true;
-                        if (infoProvider.getPlayerID() !== this.landlord)
-                            c.revealed = true;
-                    }
-                    this.players[i].addCard(c);
-                    this.players[i].updateTitle(display.landlord);
+                    this.players[i].addCard(GameElement.Card.get(card));
                 }
+            this.publiccards = display.publiccard;
             var currTL = this.finalizeTL();
             for (var _d = 0, _e = this.players; _d < _e.length; _d++) {
                 var p = _e[_d];
@@ -754,6 +761,35 @@ var Game = /** @class */ (function () {
             }
             return currTL;
         }
+        else if ("landlord" in display && this.landlord === undefined) {
+            this.prepareTL();
+            this.landlord = display.landlord;
+            for (var i = 0; i < this.players.length; i++)
+                this.players[i].updateTitle(display.landlord);
+            for (var _f = 0, _g = this.publiccards; _f < _g.length; _f++) {
+                var publiccard = _g[_f];
+                var c = GameElement.Card.get(publiccard);
+                c.publicCard = true;
+                this.players[this.landlord].addCard(c);
+                if (infoProvider.getPlayerID() !== this.landlord)
+                    c.revealed = true;
+            }
+            var currTL = this.finalizeTL();
+            for (var _h = 0, _j = this.players; _h < _j.length; _h++) {
+                var p = _j[_h];
+                currTL.fromTo(p.controls.info, 0.4, { opacity: 0 }, { opacity: 1 });
+            }
+            return currTL;
+        }
+        else if ("bid" in display) {
+            this.prepareTL();
+            var idx = display.bid.length - 1;
+            this.addToTL(Effects.call(idx, GameElement.calls[display.bid[idx]]));
+            return this.finalizeTL();
+        }
+    };
+    Game.prototype.callBid = function (bid) {
+        infoProvider.notifyPlayerMove(bid);
     };
     Game.prototype.trySubmit = function (cards) {
         if (!cards) {
