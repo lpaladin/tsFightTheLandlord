@@ -3,6 +3,7 @@ interface FirstTurnsDisplayLog {
 	publiccard: number[];
 	landlord?: number;
 	bid: number[];
+	errored?: (string | null)[];
 }
 interface DisplayLog {
 	event: {
@@ -10,6 +11,7 @@ interface DisplayLog {
 		action: number[];
 	};
 	errorInfo?: string;
+	errored?: (string | null)[];
 	0?: number;
 	1?: number;
 	2?: number;
@@ -59,6 +61,7 @@ class Game {
 
 			infoProvider.v2.setRequestCallback(req => {
 				if ("bid" in req) {
+					this.players[infoProvider.getPlayerID()].minBid = Math.max(...req.bid) + 1;
 					this.players[infoProvider.getPlayerID()].callEnabled = true;
 				} else {
 					this.players[infoProvider.getPlayerID()].enabled = true;
@@ -101,8 +104,17 @@ class Game {
 		}
 	}
 	public parseLog(display: FirstTurnsDisplayLog | DisplayLog) {
+		const checkError = () => {
+			if ("errored" in display) {
+				display.errored.forEach((error, i) =>
+					error && this.players[i].errored !== error &&
+					GameElement.tl.add(Util.biDirConstSet(this.players[i], "errored", Util.translateError[error]))
+				);
+			}
+		}
 		if ("event" in display) {
 			this.prepareTL();
+			checkError();
 			if (display.event.player === -1)
 				display.event.player = 0;
 			for (const p of this.players)
@@ -161,6 +173,7 @@ class Game {
 		} else if ("allocation" in display && !this.allocationReceived) {
 			this.allocationReceived = true;
 			this.prepareTL(0);
+			checkError();
 			for (let i = 0; i < this.players.length; i++)
 				for (const card of display.allocation[i])
 					this.players[i].addCard(GameElement.Card.get(card));
@@ -171,6 +184,7 @@ class Game {
 			return currTL;
 		} else if ("landlord" in display && this.landlord === undefined) {
 			this.prepareTL();
+			checkError();
 			this.showBidEffect(display.bid);
 			GameElement.tlHead = 1.6;
 			this.landlord = display.landlord;
@@ -187,6 +201,7 @@ class Game {
 			return this.finalizeTL();
 		} else if ("bid" in display) {
 			this.prepareTL();
+			checkError();
 			this.showBidEffect(display.bid);
 			return this.finalizeTL();
 		}

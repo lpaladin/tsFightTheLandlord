@@ -81,7 +81,8 @@ namespace Util {
 		INVALID_INPUT_VERDICT_MLE: "程序内存爆炸",
 		INVALID_INPUT_VERDICT_TLE: "决策超时",
 		INVALID_INPUT_VERDICT_NJ: "程序输出不是JSON",
-		INVALID_INPUT_VERDICT_OLE: "程序输出爆炸"
+		INVALID_INPUT_VERDICT_OLE: "程序输出爆炸",
+		INVALID_INPUT_VERDICT_OK: "决策格式错误"
 	};
 	let cnt = 0;
 	/**

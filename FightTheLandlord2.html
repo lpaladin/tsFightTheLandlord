@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8" />
 	<title>FightTheLandlord</title>
-	<link rel="stylesheet" href="FightTheLandlord2/app.css?3d211" />
+	<link rel="stylesheet" href="FightTheLandlord2/app.css?final" />
 
 	<!-- <script src="javascripts/jquery-3.1.1.min.js"></script>
 	<script src="greensocks/TweenMax.min.js"></script>
@@ -13,9 +13,7 @@
 	<script src="/javascripts/jquery-3.1.1.min.js"></script>
 	<script src="player_api.js"></script>
 	<script src="FightTheLandlord2/poker.min.js"></script>
-	<script>
-		document.write(`<script src="FightTheLandlord2/app.js?${Math.random()}"><\/script>`);
-	</script>
+	<script src="FightTheLandlord2/app.js?final"></script>
 </head>
 <body>
 	<template id="player">
@@ -34,14 +32,17 @@
 				 --><a class="btn submit" data-id="call2"><span>叫2分</span></a><!--
 				 --><a class="btn submit" data-id="call3"><span>叫3分</span></a>
 				</div>
-				<ul class="info">
+				<div class="info">
 					<!-- <figure class="avatar">
 						<img data-id="avatar" />
 					</figure> -->
-					<li class="title label-1"><span data-id="title">玩家
-					<li class="nick value-1"><span data-id="nick">姓名
-					<li class="label-2"><span>剩余牌数
-					<li class="value-2"><span class="value" data-id="deckLeft">0</span>
+					<div class="title label-1"><span data-id="title">玩家
+					</div><div class="nick value-1"><span data-id="nick">姓名
+					</div><div class="label-2"><span>剩余牌数
+					</div><div class="value-2"><span class="value" data-id="deckLeft">0</span>
+					</div>
+					<br /><div class="label-3"><span>已被托管
+					</div><div class="value-3"><span class="value" data-id="error">错误原因</span>
 				</div>
 			</div>
 		</section>

@@ -52,6 +52,7 @@ namespace GameElement {
 			title: null as JQuery,
 			avatar: null as JQuery,
 			nick: null as JQuery,
+			error: null as JQuery,
 			call0: null as JQuery,
 			call1: null as JQuery,
 			call2: null as JQuery,
@@ -127,29 +128,42 @@ namespace GameElement {
 			this.update();
 			return this.playedCards;
 		}
+		public set minBid(to: number) {
+			for (let i = 1; i < 4; i++) {
+				this.controls["call" + i][i < to ? "hide" : "show"]();
+			}
+		}
 		public get active() { return this.$visual.hasClass("active"); }
-		public set active(to) {
+		public set active(to: boolean) {
 			if (to)
 				this.$visual.addClass("active");
 			else
 				this.$visual.removeClass("active");
 		}
+		public get errored() { return this.$visual.hasClass("errored") && this.controls.error.text(); }
+		public set errored(to: string) {
+			if (to) {
+				this.$visual.addClass("errored");
+				this.controls.error.text(to);
+			} else
+				this.$visual.removeClass("errored");
+		}
 		public get visible() { return this.$visual.hasClass("visible"); }
-		public set visible(to) {
+		public set visible(to: boolean) {
 			if (to)
 				this.$visual.addClass("visible");
 			else
 				this.$visual.removeClass("visible");
 		}
 		public get callEnabled() { return this.$visual.hasClass("call-enabled"); }
-		public set callEnabled(to) {
+		public set callEnabled(to: boolean) {
 			if (to)
 				this.$visual.addClass("call-enabled");
 			else
 				this.$visual.removeClass("call-enabled");
 		}
 		public get enabled() { return this._enabled; }
-		public set enabled(to) {
+		public set enabled(to: boolean) {
 			if (this._enabled === to)
 				return;
 			this._enabled = to;

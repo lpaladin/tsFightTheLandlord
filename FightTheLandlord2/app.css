@@ -129,8 +129,10 @@ body {
       position: absolute;
       margin-top: 0;
       overflow: hidden;
-      -webkit-transition: margin-top 0.2s;
-      transition: margin-top 0.2s; }
+      -webkit-transition: margin-top 0.2s, -webkit-filter 0.2s;
+      transition: margin-top 0.2s, -webkit-filter 0.2s;
+      transition: margin-top 0.2s, filter 0.2s;
+      transition: margin-top 0.2s, filter 0.2s, -webkit-filter 0.2s; }
       #container .player .card.selected {
         -webkit-box-shadow: 0 0 1em orange;
         box-shadow: 0 0 1em orange;
@@ -231,7 +233,7 @@ body {
           color: white; }
           #container .player .deck-mask .info > * > span {
             display: block; }
-        #container .player .deck-mask .info .label-1, #container .player .deck-mask .info .label-2 {
+        #container .player .deck-mask .info .label-1, #container .player .deck-mask .info .label-2, #container .player .deck-mask .info .label-3 {
           font-weight: bold; }
         #container .player .deck-mask .info .label-1 {
           background-color: #337ab7;
@@ -246,6 +248,13 @@ body {
           margin-left: 0.3em; }
         #container .player .deck-mask .info .value-2 {
           background-color: #ddbb90; }
+        #container .player .deck-mask .info .label-3 {
+          display: none;
+          background-color: #686868;
+          margin-left: 0.3em; }
+        #container .player .deck-mask .info .value-3 {
+          display: none;
+          background-color: #cccccc; }
     #container .player.landlord .label-1 {
       background-color: #7b2b2b !important; }
     #container .player.landlord .value-1 {
@@ -264,6 +273,11 @@ body {
       box-shadow: 0 0 1em aqua; }
     #container .player.call-enabled .call-action {
       display: inline-block; }
+    #container .player.errored .info .label-3, #container .player.errored .info .value-3 {
+      display: inline-block; }
+    #container .player.errored .card {
+      -webkit-filter: brightness(0.8);
+      filter: brightness(0.8); }
   #container.curr-0 .player:nth-child(2) .info {
     -webkit-transform: rotate(120deg);
     transform: rotate(120deg); }

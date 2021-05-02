@@ -165,6 +165,7 @@ var GameElement;
                 title: null,
                 avatar: null,
                 nick: null,
+                error: null,
                 call0: null,
                 call1: null,
                 call2: null,
@@ -243,6 +244,15 @@ var GameElement;
             this.update();
             return this.playedCards;
         };
+        Object.defineProperty(Player.prototype, "minBid", {
+            set: function (to) {
+                for (var i = 1; i < 4; i++) {
+                    this.controls["call" + i][i < to ? "hide" : "show"]();
+                }
+            },
+            enumerable: true,
+            configurable: true
+        });
         Object.defineProperty(Player.prototype, "active", {
             get: function () { return this.$visual.hasClass("active"); },
             set: function (to) {
@@ -250,6 +260,19 @@ var GameElement;
                     this.$visual.addClass("active");
                 else
                     this.$visual.removeClass("active");
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Player.prototype, "errored", {
+            get: function () { return this.$visual.hasClass("errored") && this.controls.error.text(); },
+            set: function (to) {
+                if (to) {
+                    this.$visual.addClass("errored");
+                    this.controls.error.text(to);
+                }
+                else
+                    this.$visual.removeClass("errored");
             },
             enumerable: true,
             configurable: true
@@ -640,6 +663,7 @@ var Game = /** @class */ (function () {
             var tl = this.finalizeTL();
             infoProvider.v2.setRequestCallback(function (req) {
                 if ("bid" in req) {
+                    _this.players[infoProvider.getPlayerID()].minBid = Math.max.apply(Math, req.bid) + 1;
                     _this.players[infoProvider.getPlayerID()].callEnabled = true;
                 }
                 else {
@@ -688,8 +712,18 @@ var Game = /** @class */ (function () {
         }
     }
     Game.prototype.parseLog = function (display) {
+        var _this = this;
+        var checkError = function () {
+            if ("errored" in display) {
+                display.errored.forEach(function (error, i) {
+                    return error && _this.players[i].errored !== error &&
+                        GameElement.tl.add(Util.biDirConstSet(_this.players[i], "errored", Util.translateError[error]));
+                });
+            }
+        };
         if ("event" in display) {
             this.prepareTL();
+            checkError();
             if (display.event.player === -1)
                 display.event.player = 0;
             for (var _i = 0, _a = this.players; _i < _a.length; _i++) {
@@ -751,6 +785,7 @@ var Game = /** @class */ (function () {
         else if ("allocation" in display && !this.allocationReceived) {
             this.allocationReceived = true;
             this.prepareTL(0);
+            checkError();
             for (var i = 0; i < this.players.length; i++)
                 for (var _b = 0, _c = display.allocation[i]; _b < _c.length; _b++) {
                     var card = _c[_b];
@@ -766,6 +801,7 @@ var Game = /** @class */ (function () {
         }
         else if ("landlord" in display && this.landlord === undefined) {
             this.prepareTL();
+            checkError();
             this.showBidEffect(display.bid);
             GameElement.tlHead = 1.6;
             this.landlord = display.landlord;
@@ -783,6 +819,7 @@ var Game = /** @class */ (function () {
         }
         else if ("bid" in display) {
             this.prepareTL();
+            checkError();
             this.showBidEffect(display.bid);
             return this.finalizeTL();
         }
@@ -1228,7 +1265,8 @@ var Util;
         INVALID_INPUT_VERDICT_MLE: "程序内存爆炸",
         INVALID_INPUT_VERDICT_TLE: "决策超时",
         INVALID_INPUT_VERDICT_NJ: "程序输出不是JSON",
-        INVALID_INPUT_VERDICT_OLE: "程序输出爆炸"
+        INVALID_INPUT_VERDICT_OLE: "程序输出爆炸",
+        INVALID_INPUT_VERDICT_OK: "决策格式错误"
     };
     var cnt = 0;
     /**
