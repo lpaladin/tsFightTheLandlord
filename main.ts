@@ -111,6 +111,12 @@ class Game {
 					GameElement.tl.add(Util.biDirConstSet(this.players[i], "errored", Util.translateError[error]))
 				);
 			}
+		};
+		if ("0" in display && "errored" in display && display.errored.every(x => x)) {
+			checkError();
+			this.prepareTL();
+			GameElement.tl.add("所有玩家出错", "所有人获得 -1 分");
+			return this.finalizeTL();
 		}
 		if ("event" in display) {
 			this.prepareTL();

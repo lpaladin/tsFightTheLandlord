@@ -1,6 +1,6 @@
 import os
 import random
-import math
+import sys
 import json
 import numpy as np
 from collections import Counter
@@ -19,12 +19,27 @@ multiplierPokerType = {
     "火箭":1,
     "炸弹":1,
 }
-DEFAULT_BOT_RESULT = {"verdict": "OK", "response":[]}
 errored = [None for i in range(3)]
 
 def setError(player, reason):
     if errored[player] is None:
         errored[player] = reason
+    if all(errored):
+        print(json.dumps({
+            "command": "finish",
+            "content": {
+                "0": -1,
+                "1": -1,
+                "2": -1
+            },
+            "display": {
+                "0": -1,
+                "1": -1,
+                "2": -1,
+                "errored": errored
+            }
+        }))
+        sys.exit(0)
 
 # 将数字换算成点数
 def convertToPoint(x):
@@ -365,7 +380,9 @@ def main(full_input):
     if lenLog == 0:
         printRequest(currLandlord, printContent, -1, currLandlord, [[], []], bidHistory)
 
-    botResult = logs[1][str(currLandlord)] if str(currLandlord) in logs[1] else DEFAULT_BOT_RESULT
+    if str(currLandlord) not in logs[1]:
+        logs[1][str(currLandlord)] = {"verdict": "OK", "response":[]}
+    botResult = logs[1][str(currLandlord)]
     # 地主玩家代码出问题了
     if botResult["verdict"] != "OK" or "response" not in botResult or type(botResult["response"]) is not list:
         setError(currLandlord, "INVALID_INPUT_VERDICT_" + botResult["verdict"])
@@ -382,7 +399,9 @@ def main(full_input):
     for _i in range(1, lenLog, 2):
         currTurn = (currTurn + 1) % 3 
         restOwn = rest[currTurn]
-        botResult = logs[_i][str(currTurn)] if str(currTurn) in logs[_i] else DEFAULT_BOT_RESULT
+        if str(currTurn) not in logs[_i]:
+            logs[_i][str(currTurn)] = {"verdict": "OK", "response":[]}
+        botResult = logs[_i][str(currTurn)]
         if botResult["verdict"] != "OK" or "response" not in botResult or type(botResult["response"]) is not list:
             setError(currTurn, "INVALID_INPUT_VERDICT_" + botResult["verdict"])
             botResult["verdict"] = "OK"

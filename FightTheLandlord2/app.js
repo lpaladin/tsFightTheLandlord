@@ -721,6 +721,12 @@ var Game = /** @class */ (function () {
                 });
             }
         };
+        if ("0" in display && "errored" in display && display.errored.every(function (x) { return x; })) {
+            checkError();
+            this.prepareTL();
+            GameElement.tl.add("所有玩家出错", "所有人获得 -1 分");
+            return this.finalizeTL();
+        }
         if ("event" in display) {
             this.prepareTL();
             checkError();
