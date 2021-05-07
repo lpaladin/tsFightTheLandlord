@@ -113,9 +113,9 @@ class Game {
 			}
 		};
 		if ("0" in display && "errored" in display && display.errored.every(x => x)) {
-			checkError();
 			this.prepareTL();
-			GameElement.tl.add("所有玩家出错", "所有人获得 -1 分");
+			checkError();
+			this.addToTL(Effects.result("游戏中止", "所有玩家出错，均获得 -1 分"));
 			return this.finalizeTL();
 		}
 		if ("event" in display) {
