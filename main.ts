@@ -221,6 +221,7 @@ class Game {
 		const idx = bid.length - 1;
 		if (!this.bidCalled[idx]) {
 			this.bidCalled[idx] = true;
+			this.lastPlayer = idx;
 			for (const p of this.players)
 				GameElement.tl.add(Util.biDirConstSet(p, "active", p.playerid === idx));
 			this.addToTL(Effects.call(idx, GameElement.calls[bid[idx]]));
