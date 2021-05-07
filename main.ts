@@ -119,7 +119,7 @@ class Game {
 			for (const p of this.players)
 				GameElement.tl.add(
 					Util.biDirConstSet(p, "active", (this.lastPlayer + 1) % 3 === p.playerid));
-			this.addToTL(Effects.result("游戏中止", "所有玩家出错，均获得 -1 分"));
+			this.addToTL(Effects.result("游戏终止", "所有玩家出错，均获得 -1 分"));
 			return this.finalizeTL();
 		}
 		if ("event" in display) {
