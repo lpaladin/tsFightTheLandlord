@@ -30,6 +30,7 @@ class Game {
 	private pending: Array<() => void> = [];
 	private passStreak = 0;
 	private lastValidCombo: Logic.CardCombo;
+	private lastPlayer: number; // 仅用于全部崩溃情况显示当前玩家
 	constructor() {
 		// $(window).resize(this.visualInitialization.bind(this));
 		if (parent !== window) {
@@ -115,6 +116,9 @@ class Game {
 		if ("0" in display && "errored" in display && display.errored.every(x => x)) {
 			this.prepareTL();
 			checkError();
+			for (const p of this.players)
+				GameElement.tl.add(
+					Util.biDirConstSet(p, "active", (this.lastPlayer + 1) % 3 === p.playerid));
 			this.addToTL(Effects.result("游戏中止", "所有玩家出错，均获得 -1 分"));
 			return this.finalizeTL();
 		}
@@ -123,6 +127,7 @@ class Game {
 			checkError();
 			if (display.event.player === -1)
 				display.event.player = 0;
+			this.lastPlayer = display.event.player;
 			for (const p of this.players)
 				GameElement.tl.add(
 					Util.biDirConstSet(p, "active", p.playerid === display.event.player));
