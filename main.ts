@@ -25,19 +25,20 @@ class Game {
 	private bidCalled = [false, false, false];
 	private allocationReceived = false;
 	public controls = {
-		container: null as JQuery
+		container: null as JQuery,
 	};
 	private pending: Array<() => void> = [];
 	private passStreak = 0;
 	private lastValidCombo: Logic.CardCombo;
 	private lastPlayer: number; // 仅用于全部崩溃情况显示当前玩家
+	private memo: GameElement.Memo;
 	constructor() {
 		// $(window).resize(this.visualInitialization.bind(this));
 		if (parent !== window) {
 			window["TweenMax"] = infoProvider.v2.TweenMax;
 			window["TimelineMax"] = infoProvider.v2.TimelineMax;
 			this.prepareTL(0, 0.2);
-			infoProvider.v2.setMinSize(0, 500);
+			infoProvider.v2.setMinSize(0, 550);
 		}
 		this.players = [0, 1, 2].map(id => new GameElement.Player(id as PlayerID));
 		for (const p of this.players)
@@ -75,6 +76,7 @@ class Game {
 					p.visible = true;
 					p.enabled = false;
 				}
+				this.memo.update();
 				return null;
 			});
 
@@ -103,14 +105,17 @@ class Game {
 				}
 			this.players[0].enabled = this.players[0].visible = true;
 		}
+		this.memo = new GameElement.Memo();
+		this.memo.update();
 	}
 	public parseLog(display: FirstTurnsDisplayLog | DisplayLog) {
 		const checkError = () => {
 			if ("errored" in display) {
-				display.errored.forEach((error, i) =>
-					error && this.players[i].errored !== error &&
-					GameElement.tl.add(Util.biDirConstSet(this.players[i], "errored", Util.translateError[error]))
-				);
+				display.errored.forEach((error, i) => {
+					if (error && this.players[i].errored !== error) {
+						GameElement.tl.add(Util.biDirConstSet(this.players[i], "errored", Util.translateError[error]));
+					}
+				});
 			}
 		};
 		if ("0" in display && "errored" in display && display.errored.every(x => x)) {
@@ -132,8 +137,9 @@ class Game {
 				GameElement.tl.add(
 					Util.biDirConstSet(p, "active", p.playerid === display.event.player));
 			if (display.event.action.length > 0) {
-				const cards = this.players[display.event.player].playCard(display.event.action)
-					.map(c => c.card);
+				const cardEntities = this.players[display.event.player].playCard(display.event.action);
+				const names = cardEntities.map(c => c.name).join(' ');
+				const cards = cardEntities.map(c => c.card);
 				if (cards.length > 0) {
 					const combo = new Logic.CardCombo(cards);
 					if (combo.comboInfo) {
@@ -161,6 +167,7 @@ class Game {
 							default:
 								this.addToTL(Effects.common(display.event.player, combo.comboInfo.type));
 						}
+						this.tlCall(() => Util.PlayerActionLog`${this.players[display.event.player]}打出了${names}(${combo.comboInfo.type})`);
 					}
 				}
 			} else {
@@ -168,6 +175,7 @@ class Game {
 				this.passStreak++;
 				if (this.passStreak === 2)
 					this.lastValidCombo = undefined;
+				this.tlCall(() => Util.PlayerActionLog`${this.players[display.event.player]}${"过"}了`);
 			}
 			this.players[(display.event.player + 1) % 3].clearBuffer();
 			if ("0" in display) {
@@ -180,6 +188,7 @@ class Game {
 					err = "游戏结束，" + (landlordScore > farmerScore ? `地主从农民处赢得 ${landlordScore} 分` : `每个农民从地主处赢得 ${farmerScore} 分`);
 				GameElement.tl.add(Effects.result(landlordScore > farmerScore ? "地主胜利" : "农民胜利", err));
 			}
+			this.memo && this.memo.update();
 			return this.finalizeTL();
 		} else if ("allocation" in display && !this.allocationReceived) {
 			this.allocationReceived = true;
@@ -209,6 +218,7 @@ class Game {
 				if (infoProvider.getPlayerID() !== this.landlord)
 					c.revealed = true;
 			}
+			this.memo && this.memo.update();
 			return this.finalizeTL();
 		} else if ("bid" in display) {
 			this.prepareTL();
@@ -225,6 +235,15 @@ class Game {
 			for (const p of this.players)
 				GameElement.tl.add(Util.biDirConstSet(p, "active", p.playerid === idx));
 			this.addToTL(Effects.call(idx, GameElement.calls[bid[idx]]));
+			this.tlCall(() => {
+				if (idx == 0) {
+					Util.Bid`${this.players[0]}${GameElement.calls[bid[0]]}`;
+				} else if (idx == 1) {
+					Util.Bid`${this.players[0]}${GameElement.calls[bid[0]]}；${this.players[1]}${GameElement.calls[bid[1]]}`;
+				} else {
+					Util.Bid`${this.players[0]}${GameElement.calls[bid[0]]}；${this.players[1]}${GameElement.calls[bid[1]]}；${this.players[2]}${GameElement.calls[bid[2]]}`;
+				}
+			});
 		}
 	}
 	public callBid(bid: number) {
@@ -292,6 +311,9 @@ class Game {
 		GameElement.tlTime = time;
 		GameElement.finalizeCallback = cb => this.pending.push(cb);
 	}
+	public tlCall(func: Function) {
+		GameElement.tl.call(func, null, null, GameElement.tlHead);
+	}
 	public addToTL(tween: TweenMax | TimelineMax) {
 		GameElement.tl.add(tween, GameElement.tlHead);
 	}
@@ -319,6 +341,7 @@ class Game {
 let game: Game;
 $(() => {
 	try {
+		Util.logs = document.getElementById('logs');
 		game = new Game();
 	} catch (ex) {
 		parent["Botzone"].alert(ex);

@@ -28,7 +28,7 @@ namespace Effects {
 		const characters = controls.sbomb.find("> div > div");
 		const bkg = controls.sbomb.find(".bkg");
 		tl.fromTo(controls.sbomb, 0.3, { opacity: 0 }, { opacity: 1 });
-		tl.fromTo(bkg, 0.3, { opacity: 0, scale: 0 }, { opacity: 1, scale: 1 }, 0.5);
+		tl.fromTo(bkg, 0.3, { opacity: 0, scale: 0 }, { opacity: 1, scale: 1, immediateRender: false }, 0.5);
 		tl.staggerFromTo(characters, 1, { opacity: 0, scale: 3, y: 0 },
 			{ opacity: 1, scale: 1, ease: parent["Expo"].easeIn }, 0.15, 0);
 		tl.to(characters, 1, { y: "-100", opacity: 0 });
@@ -40,7 +40,7 @@ namespace Effects {
 		const characters = controls.bomb.find("> div > div");
 		const bkg = controls.bomb.find(".bkg");
 		tl.fromTo(controls.bomb, 0.3, { opacity: 0 }, { opacity: 1 });
-		tl.fromTo(bkg, 0.3, { opacity: 0, scale: 0 }, { opacity: 1, scale: 1 }, 0.5);
+		tl.fromTo(bkg, 0.3, { opacity: 0, scale: 0 }, { opacity: 1, scale: 1, immediateRender: false }, 0.5);
 		tl.staggerFromTo(characters, 1, { opacity: 0, scale: 3 },
 			{ opacity: 1, scale: 1, ease: parent["Expo"].easeIn }, 0.15, 0);
 		tl.to(controls.bomb, 0.5, { opacity: 0 }, "+=1");

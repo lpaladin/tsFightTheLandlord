@@ -155,8 +155,8 @@ namespace Util {
 	 * 将字符串中的危险字符进行转义
 	 * @param hostile 危险的字符串
 	 */
-	export function neutralize(hostile: string) {
-		constNode.textContent = hostile;
+	export function neutralize(hostile: string | number) {
+		constNode.textContent = hostile.toString();
 		return constNode.innerHTML;
 	}
 
@@ -234,4 +234,61 @@ namespace Util {
 		}
 		return newObj;
 	}
+
+	export let logs: HTMLElement;
+
+	function playerInfoToHTML(x: GameElement.Player) {
+		return `${x.controls.title.text()} <span>${neutralize(
+			x.controls.nick.text()
+		)}</span>`;
+	}
+
+	function logComposeHTML(parts: TemplateStringsArray, args: Array<number | string | GameElement.Player | Array<GameElement.Player>>) {
+		return parts.reduce((prev, curr, i) => {
+			const arg = args[i - 1];
+			if (Array.isArray(arg)) {
+				return `${prev}${arg.map(p => playerInfoToHTML(p)).join("、")}${curr}`;
+			}
+			if (typeof arg === "object") {
+				return `${prev}${playerInfoToHTML(arg)}${curr}`;
+			}
+			return `${prev}<span>${neutralize(arg)}</span>${curr}`;
+		});
+	}
+
+	export function Log(parts: TemplateStringsArray, ...args: Array<number | string | GameElement.Player | Array<GameElement.Player>>) {
+		const newChild = document.createElement("div");
+		newChild.innerHTML = logComposeHTML(parts, args);
+		logs.appendChild(newChild);
+		const tl = new TimelineMax();
+		tl.from(newChild, 0.1, { opacity: 0 });
+		tl.to(newChild, 0.1, { height: 0, onComplete: () => logs.removeChild(newChild) }, 2);
+	}
+
+	function CreatePrimaryLogger(channel: string) {
+		return (parts: TemplateStringsArray, ...args: Array<number | string | GameElement.Player | Array<GameElement.Player>>) => {
+			const newChild = document.createElement("div");
+			newChild.className = "primary " + channel;
+			newChild.innerHTML = logComposeHTML(parts, args);
+			const oldLogs = logs.querySelectorAll(".primary." + channel);
+			for (let i = 0; i < oldLogs.length; i++) {
+				const c = oldLogs[i];
+				TweenMax.to(c, 0.1, {
+					height: 0,
+					onComplete: () => {
+						try {
+							logs.removeChild(c);
+						} catch { }
+					},
+					delay: i === oldLogs.length - 1 ? 1 : 0
+				});
+			}
+			logs.appendChild(newChild);
+			TweenMax.from(newChild, 0.1, { opacity: 0 });
+		};
+	}
+
+	export const PlayerTurnLog = CreatePrimaryLogger("turn");
+	export const PlayerActionLog = CreatePrimaryLogger("action");
+	export const Bid = CreatePrimaryLogger("bid");
 }

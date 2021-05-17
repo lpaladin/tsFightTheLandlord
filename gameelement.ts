@@ -135,16 +135,21 @@ namespace GameElement {
 		}
 		public get active() { return this.$visual.hasClass("active"); }
 		public set active(to: boolean) {
-			if (to)
+			if (to) {
 				this.$visual.addClass("active");
-			else
+				Util.PlayerTurnLog`${this}的回合`;
+			} else
 				this.$visual.removeClass("active");
 		}
 		public get errored() { return this.$visual.hasClass("errored") && this.controls.error.text(); }
 		public set errored(to: string) {
+			if (!!to == this.$visual.hasClass("errored")) {
+				return;
+			}
 			if (to) {
 				this.$visual.addClass("errored");
 				this.controls.error.text(to);
+				Util.Log`${this}由于${to}而退场并被托管`
 			} else
 				this.$visual.removeClass("errored");
 		}
@@ -257,11 +262,12 @@ namespace GameElement {
 		public static get(cardid: number) {
 			return Card.allCards[cardid] = Card.allCards[cardid] || new Card(cardid);
 		}
-		private static readonly MAX_CARD_ID = 54;
+		public static readonly MAX_CARD_ID = 54;
 		private static readonly allCards: Card[] = new Array(Card.MAX_CARD_ID);
 
 		public $visual: JQuery;
 		public readonly card: PokerCard;
+		public readonly name: string;
 		private _nth: number;
 		private _total: number;
 		private _isInDeck: boolean = true;
@@ -272,10 +278,13 @@ namespace GameElement {
 		private isLeavingDeck = false;
 		private nextTickUpdate = false;
 		private constructor(public readonly cardid: number) {
-			if (cardid < 52)
+			if (cardid < 52) {
 				this.card = [Logic.SUITS[cardid % 4], Logic.POINTS[Math.floor(cardid / 4)]];
-			else
+				this.name = Logic.POINTS[Math.floor(cardid / 4)].toUpperCase();
+			} else {
 				this.card = [cardid === 53 ? "h" : "s", "o"];
+				this.name = cardid === 53 ? "大王" : "小王";
+			}
 			this.lastCardHeight = cardHeight;
 			this.$visual = $('<figure class="card"></figure>');
 			this.$visual.css("zIndex", cardid);
@@ -435,6 +444,59 @@ namespace GameElement {
 				this.$visual.addClass("selected");
 			else
 				this.$visual.removeClass("selected");
+		}
+	}
+
+	export class Memo {
+		public visual: HTMLElement;
+
+		public nameToCounter: { [name: string]: HTMLElement } = {};
+
+		public constructor() {
+			this.visual = document.getElementById("memo") as HTMLElement;
+			for (let i = 0; i < Card.MAX_CARD_ID; i++) {
+				const card = Card.get(i);
+				if (card.card[0] == 'h' || i >= 52) {
+					const h = document.createElement('div');
+					h.className = "name";
+					h.textContent = card.name;
+					const v = document.createElement('td');
+					v.className = "count";
+					v.textContent = "4";
+					h.appendChild(v);
+					this.nameToCounter[card.name] = v;
+					this.visual.appendChild(h);
+					if (this.visual.childElementCount == 8) {
+						this.visual.appendChild(document.createElement('br'));
+					}
+				}
+			}
+		}
+
+		public update() {
+			const nameToCount: { [name: string]: number } = {};
+			for (let i = 0; i < Card.MAX_CARD_ID; i++) {
+				const card = Card.get(i);
+				if (!card.revealed && card.$visual.closest(".visible").length == 0) {
+					nameToCount[card.name] = (nameToCount[card.name] || 0) + 1;
+				}
+			}
+			if (Object.keys(nameToCount).length == 0) {
+				this.visible = false;
+				return;
+			}
+			for (const k of Object.keys(this.nameToCounter)) {
+				this.nameToCounter[k].textContent = (nameToCount[k] || 0).toString();
+				if (nameToCount[k] == 4) {
+					this.nameToCounter[k].className = "count full";
+				} else if (!nameToCount[k]) {
+					this.nameToCounter[k].className = "count empty";
+				}
+			}
+		}
+
+		public set visible(to: boolean) {
+			this.visual.style.display = to ? "inherit" : "none";
 		}
 	}
 }

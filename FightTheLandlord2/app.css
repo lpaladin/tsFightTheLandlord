@@ -1,4 +1,11 @@
-body, figure, div, section, span, ul, li, p {
+body,
+figure,
+div,
+section,
+span,
+ul,
+li,
+p {
   padding: 0;
   margin: 0; }
 
@@ -69,19 +76,22 @@ body {
     transform: translateY(-50%);
     color: darkred;
     text-shadow: white 0 1px, goldenrod 1px 0, white -1px 0, white 0 -1px, black 0 0 1em; }
-  #effect #bomb, #effect #sbomb {
+  #effect #bomb,
+  #effect #sbomb {
     -webkit-transform: translate(-50%, -50%);
     transform: translate(-50%, -50%);
     color: goldenrod;
     text-shadow: white 0 1px, white 1px 0, white -1px 0, white 0 -1px, gold 0 0 1em; }
-    #effect #bomb > .bkg, #effect #sbomb > .bkg {
+    #effect #bomb > .bkg,
+    #effect #sbomb > .bkg {
       position: absolute;
       top: 50%;
       left: 50%;
       -webkit-transform: translate(-50%, -50%);
       transform: translate(-50%, -50%);
       z-index: -1; }
-    #effect #bomb > div > div, #effect #sbomb > div > div {
+    #effect #bomb > div > div,
+    #effect #sbomb > div > div {
       display: inline-block; }
   #effect #sbomb {
     color: red; }
@@ -159,11 +169,14 @@ body {
         transition: opacity 0.2s; }
         #container .player .card img:nth-child(1) {
           opacity: 0; }
-    #container .player.visible .card img:nth-child(1), #container .player .card.revealed img:nth-child(1) {
+    #container .player.visible .card img:nth-child(1),
+    #container .player .card.revealed img:nth-child(1) {
       opacity: 1; }
-    #container .player.visible .card img:nth-child(2), #container .player .card.revealed img:nth-child(2) {
+    #container .player.visible .card img:nth-child(2),
+    #container .player .card.revealed img:nth-child(2) {
       opacity: 0; }
-    #container .player .action, #container .player .call-action {
+    #container .player .action,
+    #container .player .call-action {
       pointer-events: auto;
       z-index: 1001;
       bottom: 100%;
@@ -173,7 +186,8 @@ body {
       position: absolute;
       display: none;
       text-align: center; }
-      #container .player .action .btn, #container .player .call-action .btn {
+      #container .player .action .btn,
+      #container .player .call-action .btn {
         cursor: pointer;
         display: inline-block;
         border: 2px solid transparent;
@@ -181,13 +195,16 @@ body {
         text-shadow: 0 0 1px rgba(255, 255, 255, 0.3);
         padding: 0.3em 1em;
         font-size: 1.1em; }
-        #container .player .action .btn > *, #container .player .call-action .btn > * {
+        #container .player .action .btn > *,
+        #container .player .call-action .btn > * {
           display: block; }
-        #container .player .action .btn.submit, #container .player .call-action .btn.submit {
+        #container .player .action .btn.submit,
+        #container .player .call-action .btn.submit {
           background-color: #83aa66;
           border-color: #83aa66;
           color: white; }
-          #container .player .action .btn.submit .hint, #container .player .call-action .btn.submit .hint {
+          #container .player .action .btn.submit .hint,
+          #container .player .call-action .btn.submit .hint {
             display: none;
             position: absolute;
             bottom: 100%;
@@ -198,16 +215,20 @@ body {
             background-color: rgba(0, 0, 0, 0.7);
             color: white;
             pointer-events: none; }
-          #container .player .action .btn.submit:hover .hint, #container .player .call-action .btn.submit:hover .hint {
+          #container .player .action .btn.submit:hover .hint,
+          #container .player .call-action .btn.submit:hover .hint {
             display: inline-block; }
-        #container .player .action .btn.pass, #container .player .call-action .btn.pass {
+        #container .player .action .btn.pass,
+        #container .player .call-action .btn.pass {
           background-color: #b36e6e;
           border-color: #b36e6e;
           color: white; }
-        #container .player .action .btn:active, #container .player .call-action .btn:active {
+        #container .player .action .btn:active,
+        #container .player .call-action .btn:active {
           -webkit-box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
           box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125); }
-        #container .player .action .btn:hover, #container .player .call-action .btn:hover {
+        #container .player .action .btn:hover,
+        #container .player .call-action .btn:hover {
           color: #777;
           background-color: white; }
     #container .player .deck-mask {
@@ -233,7 +254,9 @@ body {
           color: white; }
           #container .player .deck-mask .info > * > span {
             display: block; }
-        #container .player .deck-mask .info .label-1, #container .player .deck-mask .info .label-2, #container .player .deck-mask .info .label-3 {
+        #container .player .deck-mask .info .label-1,
+        #container .player .deck-mask .info .label-2,
+        #container .player .deck-mask .info .label-3 {
           font-weight: bold; }
         #container .player .deck-mask .info .label-1 {
           background-color: #337ab7;
@@ -264,7 +287,8 @@ body {
       #container .player.active .info > *, #container .player.enabled .info > * {
         -webkit-box-shadow: 0 0 1em white;
         box-shadow: 0 0 1em white; }
-    #container .player .submit, #container .player .pass {
+    #container .player .submit,
+    #container .player .pass {
       display: none; }
     #container .player.enabled .action {
       display: inline-block; }
@@ -273,7 +297,8 @@ body {
       box-shadow: 0 0 1em aqua; }
     #container .player.call-enabled .call-action {
       display: inline-block; }
-    #container .player.errored .info .label-3, #container .player.errored .info .value-3 {
+    #container .player.errored .info .label-3,
+    #container .player.errored .info .value-3 {
       display: inline-block; }
     #container .player.errored .card {
       -webkit-filter: brightness(0.8);
@@ -296,3 +321,70 @@ body {
   #container.curr-2 .player:nth-child(2) .info {
     -webkit-transform: rotate(-120deg);
     transform: rotate(-120deg); }
+
+#logs {
+  pointer-events: none; }
+
+#logs img {
+  height: 1.6em;
+  width: 1.6em;
+  vertical-align: top; }
+
+#logs > * {
+  padding: 0 0.5em;
+  height: 1.6em;
+  line-height: 1.6em;
+  overflow: hidden;
+  background-image: -webkit-gradient(linear, left top, right top, from(skyblue), color-stop(50%, transparent));
+  background-image: linear-gradient(to right, skyblue, transparent 50%);
+  color: white;
+  vertical-align: top; }
+
+#logs > .primary.action {
+  background-image: -webkit-gradient(linear, left top, right top, from(#eb8787), color-stop(50%, transparent));
+  background-image: linear-gradient(to right, #eb8787, transparent 50%); }
+
+#logs > .primary.turn {
+  background-image: -webkit-gradient(linear, left top, right top, from(#44bd53), color-stop(50%, transparent));
+  background-image: linear-gradient(to right, #44bd53, transparent 50%); }
+
+#logs > .primary.bid {
+  background-image: -webkit-gradient(linear, left top, right top, from(#dc92ff), to(transparent));
+  background-image: linear-gradient(to right, #dc92ff, transparent); }
+
+#logs > * > span {
+  color: yellow;
+  margin: 0 0.2em; }
+
+#memo {
+  position: absolute;
+  left: 1em;
+  bottom: 1em;
+  text-align: center; }
+  #memo .name {
+    background-color: #ffffff;
+    color: #337ab7;
+    border: 2px solid #337ab7;
+    display: inline-block;
+    position: relative;
+    padding: 5px 1em 5px 5px;
+    margin: 5px;
+    font-weight: bold; }
+    #memo .name .count {
+      background-color: #337ab7;
+      color: white;
+      position: absolute;
+      border: 1px solid white;
+      font-weight: normal;
+      font-size: 0.5em;
+      padding: 5px;
+      top: 0;
+      right: 0;
+      -webkit-transform: rotate(-5deg) translate(50%, -25%);
+      transform: rotate(-5deg) translate(50%, -25%); }
+      #memo .name .count.full {
+        background-color: gold;
+        color: black;
+        font-weight: bold; }
+      #memo .name .count.empty {
+        opacity: 0.5; }

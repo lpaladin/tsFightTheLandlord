@@ -30,7 +30,7 @@ var Effects;
         var characters = controls.sbomb.find("> div > div");
         var bkg = controls.sbomb.find(".bkg");
         tl.fromTo(controls.sbomb, 0.3, { opacity: 0 }, { opacity: 1 });
-        tl.fromTo(bkg, 0.3, { opacity: 0, scale: 0 }, { opacity: 1, scale: 1 }, 0.5);
+        tl.fromTo(bkg, 0.3, { opacity: 0, scale: 0 }, { opacity: 1, scale: 1, immediateRender: false }, 0.5);
         tl.staggerFromTo(characters, 1, { opacity: 0, scale: 3, y: 0 }, { opacity: 1, scale: 1, ease: parent["Expo"].easeIn }, 0.15, 0);
         tl.to(characters, 1, { y: "-100", opacity: 0 });
         tl.to(controls.sbomb, 0.5, { opacity: 0 });
@@ -42,7 +42,7 @@ var Effects;
         var characters = controls.bomb.find("> div > div");
         var bkg = controls.bomb.find(".bkg");
         tl.fromTo(controls.bomb, 0.3, { opacity: 0 }, { opacity: 1 });
-        tl.fromTo(bkg, 0.3, { opacity: 0, scale: 0 }, { opacity: 1, scale: 1 }, 0.5);
+        tl.fromTo(bkg, 0.3, { opacity: 0, scale: 0 }, { opacity: 1, scale: 1, immediateRender: false }, 0.5);
         tl.staggerFromTo(characters, 1, { opacity: 0, scale: 3 }, { opacity: 1, scale: 1, ease: parent["Expo"].easeIn }, 0.15, 0);
         tl.to(controls.bomb, 0.5, { opacity: 0 }, "+=1");
         return tl;
@@ -114,6 +114,10 @@ var Effects;
     }
     Effects.call = call;
 })(Effects || (Effects = {}));
+var __makeTemplateObject = (this && this.__makeTemplateObject) || function (cooked, raw) {
+    if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
+    return cooked;
+};
 var GameElement;
 (function (GameElement) {
     GameElement.playerTitles = [
@@ -256,8 +260,10 @@ var GameElement;
         Object.defineProperty(Player.prototype, "active", {
             get: function () { return this.$visual.hasClass("active"); },
             set: function (to) {
-                if (to)
+                if (to) {
                     this.$visual.addClass("active");
+                    Util.PlayerTurnLog(__makeTemplateObject(["", "\u7684\u56DE\u5408"], ["", "\u7684\u56DE\u5408"]), this);
+                }
                 else
                     this.$visual.removeClass("active");
             },
@@ -267,9 +273,13 @@ var GameElement;
         Object.defineProperty(Player.prototype, "errored", {
             get: function () { return this.$visual.hasClass("errored") && this.controls.error.text(); },
             set: function (to) {
+                if (!!to == this.$visual.hasClass("errored")) {
+                    return;
+                }
                 if (to) {
                     this.$visual.addClass("errored");
                     this.controls.error.text(to);
+                    Util.Log(__makeTemplateObject(["", "\u7531\u4E8E", "\u800C\u9000\u573A\u5E76\u88AB\u6258\u7BA1"], ["", "\u7531\u4E8E", "\u800C\u9000\u573A\u5E76\u88AB\u6258\u7BA1"]), this, to);
                 }
                 else
                     this.$visual.removeClass("errored");
@@ -409,10 +419,14 @@ var GameElement;
             this._visible = true;
             this.isLeavingDeck = false;
             this.nextTickUpdate = false;
-            if (cardid < 52)
+            if (cardid < 52) {
                 this.card = [Logic.SUITS[cardid % 4], Logic.POINTS[Math.floor(cardid / 4)]];
-            else
+                this.name = Logic.POINTS[Math.floor(cardid / 4)].toUpperCase();
+            }
+            else {
                 this.card = [cardid === 53 ? "h" : "s", "o"];
+                this.name = cardid === 53 ? "大王" : "小王";
+            }
             this.lastCardHeight = cardHeight;
             this.$visual = $('<figure class="card"></figure>');
             this.$visual.css("zIndex", cardid);
@@ -617,6 +631,61 @@ var GameElement;
         return Card;
     }());
     GameElement.Card = Card;
+    var Memo = /** @class */ (function () {
+        function Memo() {
+            this.nameToCounter = {};
+            this.visual = document.getElementById("memo");
+            for (var i = 0; i < Card.MAX_CARD_ID; i++) {
+                var card = Card.get(i);
+                if (card.card[0] == 'h' || i >= 52) {
+                    var h = document.createElement('div');
+                    h.className = "name";
+                    h.textContent = card.name;
+                    var v = document.createElement('td');
+                    v.className = "count";
+                    v.textContent = "4";
+                    h.appendChild(v);
+                    this.nameToCounter[card.name] = v;
+                    this.visual.appendChild(h);
+                    if (this.visual.childElementCount == 8) {
+                        this.visual.appendChild(document.createElement('br'));
+                    }
+                }
+            }
+        }
+        Memo.prototype.update = function () {
+            var nameToCount = {};
+            for (var i = 0; i < Card.MAX_CARD_ID; i++) {
+                var card = Card.get(i);
+                if (!card.revealed && card.$visual.closest(".visible").length == 0) {
+                    nameToCount[card.name] = (nameToCount[card.name] || 0) + 1;
+                }
+            }
+            if (Object.keys(nameToCount).length == 0) {
+                this.visible = false;
+                return;
+            }
+            for (var _i = 0, _a = Object.keys(this.nameToCounter); _i < _a.length; _i++) {
+                var k = _a[_i];
+                this.nameToCounter[k].textContent = (nameToCount[k] || 0).toString();
+                if (nameToCount[k] == 4) {
+                    this.nameToCounter[k].className = "count full";
+                }
+                else if (!nameToCount[k]) {
+                    this.nameToCounter[k].className = "count empty";
+                }
+            }
+        };
+        Object.defineProperty(Memo.prototype, "visible", {
+            set: function (to) {
+                this.visual.style.display = to ? "inherit" : "none";
+            },
+            enumerable: true,
+            configurable: true
+        });
+        return Memo;
+    }());
+    GameElement.Memo = Memo;
 })(GameElement || (GameElement = {}));
 // TODO：tweencontentasnumber在页面ajaxload回来后会出现鬼畜的效果……
 var Game = /** @class */ (function () {
@@ -627,7 +696,7 @@ var Game = /** @class */ (function () {
         this.bidCalled = [false, false, false];
         this.allocationReceived = false;
         this.controls = {
-            container: null
+            container: null,
         };
         this.pending = [];
         this.passStreak = 0;
@@ -636,7 +705,7 @@ var Game = /** @class */ (function () {
             window["TweenMax"] = infoProvider.v2.TweenMax;
             window["TimelineMax"] = infoProvider.v2.TimelineMax;
             this.prepareTL(0, 0.2);
-            infoProvider.v2.setMinSize(0, 500);
+            infoProvider.v2.setMinSize(0, 550);
         }
         this.players = [0, 1, 2].map(function (id) { return new GameElement.Player(id); });
         for (var _i = 0, _a = this.players; _i < _a.length; _i++) {
@@ -678,6 +747,7 @@ var Game = /** @class */ (function () {
                     p.visible = true;
                     p.enabled = false;
                 }
+                _this.memo.update();
                 return null;
             });
             infoProvider.v2.notifyInitComplete(tl);
@@ -710,21 +780,28 @@ var Game = /** @class */ (function () {
             }
             this.players[0].enabled = this.players[0].visible = true;
         }
+        this.memo = new GameElement.Memo();
+        this.memo.update();
     }
     Game.prototype.parseLog = function (display) {
         var _this = this;
         var checkError = function () {
             if ("errored" in display) {
                 display.errored.forEach(function (error, i) {
-                    return error && _this.players[i].errored !== error &&
+                    if (error && _this.players[i].errored !== error) {
                         GameElement.tl.add(Util.biDirConstSet(_this.players[i], "errored", Util.translateError[error]));
+                    }
                 });
             }
         };
         if ("0" in display && "errored" in display && display.errored.every(function (x) { return x; })) {
-            checkError();
             this.prepareTL();
-            GameElement.tl.add("所有玩家出错", "所有人获得 -1 分");
+            checkError();
+            for (var _i = 0, _a = this.players; _i < _a.length; _i++) {
+                var p = _a[_i];
+                GameElement.tl.add(Util.biDirConstSet(p, "active", (this.lastPlayer + 1) % 3 === p.playerid));
+            }
+            this.addToTL(Effects.result("游戏终止", "所有玩家出错，均获得 -1 分"));
             return this.finalizeTL();
         }
         if ("event" in display) {
@@ -732,19 +809,21 @@ var Game = /** @class */ (function () {
             checkError();
             if (display.event.player === -1)
                 display.event.player = 0;
-            for (var _i = 0, _a = this.players; _i < _a.length; _i++) {
-                var p = _a[_i];
+            this.lastPlayer = display.event.player;
+            for (var _b = 0, _c = this.players; _b < _c.length; _b++) {
+                var p = _c[_b];
                 GameElement.tl.add(Util.biDirConstSet(p, "active", p.playerid === display.event.player));
             }
             if (display.event.action.length > 0) {
-                var cards = this.players[display.event.player].playCard(display.event.action)
-                    .map(function (c) { return c.card; });
+                var cardEntities = this.players[display.event.player].playCard(display.event.action);
+                var names_1 = cardEntities.map(function (c) { return c.name; }).join(' ');
+                var cards = cardEntities.map(function (c) { return c.card; });
                 if (cards.length > 0) {
-                    var combo = new Logic.CardCombo(cards);
-                    if (combo.comboInfo) {
+                    var combo_1 = new Logic.CardCombo(cards);
+                    if (combo_1.comboInfo) {
                         this.passStreak = 0;
-                        this.lastValidCombo = combo;
-                        switch (combo.comboInfo.type) {
+                        this.lastValidCombo = combo_1;
+                        switch (combo_1.comboInfo.type) {
                             case "炸弹":
                                 this.addToTL(Effects.bomb());
                                 break;
@@ -753,7 +832,7 @@ var Game = /** @class */ (function () {
                                 break;
                             case "单顺":
                             case "双顺":
-                                this.addToTL(Effects.uncommon(combo.comboInfo.type));
+                                this.addToTL(Effects.uncommon(combo_1.comboInfo.type));
                                 break;
                             case "航天飞机":
                             case "航天飞机带小翼":
@@ -761,11 +840,12 @@ var Game = /** @class */ (function () {
                             case "飞机":
                             case "飞机带小翼":
                             case "飞机带大翼":
-                                this.addToTL(Effects.fly(combo.comboInfo.type));
+                                this.addToTL(Effects.fly(combo_1.comboInfo.type));
                                 break;
                             default:
-                                this.addToTL(Effects.common(display.event.player, combo.comboInfo.type));
+                                this.addToTL(Effects.common(display.event.player, combo_1.comboInfo.type));
                         }
+                        this.tlCall(function () { return Util.PlayerActionLog(__makeTemplateObject(["", "\u6253\u51FA\u4E86", "(", ")"], ["", "\u6253\u51FA\u4E86", "(", ")"]), _this.players[display.event.player], names_1, combo_1.comboInfo.type); });
                     }
                 }
             }
@@ -774,6 +854,7 @@ var Game = /** @class */ (function () {
                 this.passStreak++;
                 if (this.passStreak === 2)
                     this.lastValidCombo = undefined;
+                this.tlCall(function () { return Util.PlayerActionLog(__makeTemplateObject(["", "", "\u4E86"], ["", "", "\u4E86"]), _this.players[display.event.player], "过"); });
             }
             this.players[(display.event.player + 1) % 3].clearBuffer();
             if ("0" in display) {
@@ -786,6 +867,7 @@ var Game = /** @class */ (function () {
                     err = "游戏结束，" + (landlordScore > farmerScore ? "\u5730\u4E3B\u4ECE\u519C\u6C11\u5904\u8D62\u5F97 " + landlordScore + " \u5206" : "\u6BCF\u4E2A\u519C\u6C11\u4ECE\u5730\u4E3B\u5904\u8D62\u5F97 " + farmerScore + " \u5206");
                 GameElement.tl.add(Effects.result(landlordScore > farmerScore ? "地主胜利" : "农民胜利", err));
             }
+            this.memo && this.memo.update();
             return this.finalizeTL();
         }
         else if ("allocation" in display && !this.allocationReceived) {
@@ -793,14 +875,14 @@ var Game = /** @class */ (function () {
             this.prepareTL(0);
             checkError();
             for (var i = 0; i < this.players.length; i++)
-                for (var _b = 0, _c = display.allocation[i]; _b < _c.length; _b++) {
-                    var card = _c[_b];
+                for (var _d = 0, _e = display.allocation[i]; _d < _e.length; _d++) {
+                    var card = _e[_d];
                     this.players[i].addCard(GameElement.Card.get(card));
                 }
             this.publiccards = display.publiccard;
             var currTL = this.finalizeTL();
-            for (var _d = 0, _e = this.players; _d < _e.length; _d++) {
-                var p = _e[_d];
+            for (var _f = 0, _g = this.players; _f < _g.length; _f++) {
+                var p = _g[_f];
                 currTL.fromTo(p.controls.info, 0.4, { opacity: 0 }, { opacity: 1 });
             }
             return currTL;
@@ -813,14 +895,15 @@ var Game = /** @class */ (function () {
             this.landlord = display.landlord;
             for (var i = 0; i < this.players.length; i++)
                 this.players[i].updateTitle(display.landlord);
-            for (var _f = 0, _g = this.publiccards; _f < _g.length; _f++) {
-                var publiccard = _g[_f];
+            for (var _h = 0, _j = this.publiccards; _h < _j.length; _h++) {
+                var publiccard = _j[_h];
                 var c = GameElement.Card.get(publiccard);
                 this.players[this.landlord].addCard(c);
                 c.publicCard = true;
                 if (infoProvider.getPlayerID() !== this.landlord)
                     c.revealed = true;
             }
+            this.memo && this.memo.update();
             return this.finalizeTL();
         }
         else if ("bid" in display) {
@@ -831,14 +914,27 @@ var Game = /** @class */ (function () {
         }
     };
     Game.prototype.showBidEffect = function (bid) {
+        var _this = this;
         var idx = bid.length - 1;
         if (!this.bidCalled[idx]) {
             this.bidCalled[idx] = true;
+            this.lastPlayer = idx;
             for (var _i = 0, _a = this.players; _i < _a.length; _i++) {
                 var p = _a[_i];
                 GameElement.tl.add(Util.biDirConstSet(p, "active", p.playerid === idx));
             }
             this.addToTL(Effects.call(idx, GameElement.calls[bid[idx]]));
+            this.tlCall(function () {
+                if (idx == 0) {
+                    Util.Bid(__makeTemplateObject(["", "", ""], ["", "", ""]), _this.players[0], GameElement.calls[bid[0]]);
+                }
+                else if (idx == 1) {
+                    Util.Bid(__makeTemplateObject(["", "", "\uFF1B", "", ""], ["", "", "\uFF1B", "", ""]), _this.players[0], GameElement.calls[bid[0]], _this.players[1], GameElement.calls[bid[1]]);
+                }
+                else {
+                    Util.Bid(__makeTemplateObject(["", "", "\uFF1B", "", "\uFF1B", "", ""], ["", "", "\uFF1B", "", "\uFF1B", "", ""]), _this.players[0], GameElement.calls[bid[0]], _this.players[1], GameElement.calls[bid[1]], _this.players[2], GameElement.calls[bid[2]]);
+                }
+            });
         }
     };
     Game.prototype.callBid = function (bid) {
@@ -910,6 +1006,9 @@ var Game = /** @class */ (function () {
         GameElement.tlTime = time;
         GameElement.finalizeCallback = function (cb) { return _this.pending.push(cb); };
     };
+    Game.prototype.tlCall = function (func) {
+        GameElement.tl.call(func, null, null, GameElement.tlHead);
+    };
     Game.prototype.addToTL = function (tween) {
         GameElement.tl.add(tween, GameElement.tlHead);
     };
@@ -939,6 +1038,7 @@ var Game = /** @class */ (function () {
 var game;
 $(function () {
     try {
+        Util.logs = document.getElementById('logs');
         game = new Game();
     }
     catch (ex) {
@@ -1346,7 +1446,7 @@ var Util;
      * @param hostile 危险的字符串
      */
     function neutralize(hostile) {
-        constNode.textContent = hostile;
+        constNode.textContent = hostile.toString();
         return constNode.innerHTML;
     }
     Util.neutralize = neutralize;
@@ -1425,4 +1525,65 @@ var Util;
         return newObj;
     }
     Util.invert = invert;
+    function playerInfoToHTML(x) {
+        return x.controls.title.text() + " <span>" + neutralize(x.controls.nick.text()) + "</span>";
+    }
+    function logComposeHTML(parts, args) {
+        return parts.reduce(function (prev, curr, i) {
+            var arg = args[i - 1];
+            if (Array.isArray(arg)) {
+                return "" + prev + arg.map(function (p) { return playerInfoToHTML(p); }).join("、") + curr;
+            }
+            if (typeof arg === "object") {
+                return "" + prev + playerInfoToHTML(arg) + curr;
+            }
+            return prev + "<span>" + neutralize(arg) + "</span>" + curr;
+        });
+    }
+    function Log(parts) {
+        var args = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            args[_i - 1] = arguments[_i];
+        }
+        var newChild = document.createElement("div");
+        newChild.innerHTML = logComposeHTML(parts, args);
+        Util.logs.appendChild(newChild);
+        var tl = new TimelineMax();
+        tl.from(newChild, 0.1, { opacity: 0 });
+        tl.to(newChild, 0.1, { height: 0, onComplete: function () { return Util.logs.removeChild(newChild); } }, 2);
+    }
+    Util.Log = Log;
+    function CreatePrimaryLogger(channel) {
+        return function (parts) {
+            var args = [];
+            for (var _i = 1; _i < arguments.length; _i++) {
+                args[_i - 1] = arguments[_i];
+            }
+            var newChild = document.createElement("div");
+            newChild.className = "primary " + channel;
+            newChild.innerHTML = logComposeHTML(parts, args);
+            var oldLogs = Util.logs.querySelectorAll(".primary." + channel);
+            var _loop_3 = function (i) {
+                var c = oldLogs[i];
+                TweenMax.to(c, 0.1, {
+                    height: 0,
+                    onComplete: function () {
+                        try {
+                            Util.logs.removeChild(c);
+                        }
+                        catch (_a) { }
+                    },
+                    delay: i === oldLogs.length - 1 ? 1 : 0
+                });
+            };
+            for (var i = 0; i < oldLogs.length; i++) {
+                _loop_3(i);
+            }
+            Util.logs.appendChild(newChild);
+            TweenMax.from(newChild, 0.1, { opacity: 0 });
+        };
+    }
+    Util.PlayerTurnLog = CreatePrimaryLogger("turn");
+    Util.PlayerActionLog = CreatePrimaryLogger("action");
+    Util.Bid = CreatePrimaryLogger("bid");
 })(Util || (Util = {}));

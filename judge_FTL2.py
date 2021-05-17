@@ -54,6 +54,8 @@ def initGame(full_input):
         full_input["initdata"] = json.loads(full_input["initdata"])
     except Exception:
         pass
+    if type(full_input["initdata"]) is not dict:
+        full_input["initdata"] = {}
 
     if "seed" in full_input["initdata"]:
         seedRandom = full_input["initdata"]["seed"] 
@@ -300,7 +302,7 @@ def checkLandlord(log):
             tmpLandlord, tmpScore = curr, s
     if l < 6:
         tmpLandlord = -1
-    else:
+    elif tmpLandlord == -1:
         tmpLandlord = 0
     return tmpLandlord, bidHistory, None, None
 
@@ -399,6 +401,10 @@ def main(full_input):
     for _i in range(1, lenLog, 2):
         currTurn = (currTurn + 1) % 3 
         restOwn = rest[currTurn]
+        if _i + 1 < lenLog and logs[_i + 1]["output"]["display"]:
+            display = logs[_i + 1]["output"]["display"]
+            if "event" in display:
+                logs[_i][str(currTurn)] = {"verdict": "OK", "response": display["event"]["action"]}
         if str(currTurn) not in logs[_i]:
             logs[_i][str(currTurn)] = {"verdict": "OK", "response":[]}
         botResult = logs[_i][str(currTurn)]

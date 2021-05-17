@@ -58,6 +58,7 @@ def initGame(full_input):
     if "seed" in full_input["initdata"]:
         seedRandom = full_input["initdata"]["seed"] 
     
+    random.seed(seedRandom)
     if "allocation" in full_input["initdata"]:
         allocation = full_input["initdata"]["allocation"]
     else: # 产生大家各自有什么牌
