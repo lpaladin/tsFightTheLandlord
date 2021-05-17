@@ -491,6 +491,8 @@ namespace GameElement {
 					this.nameToCounter[k].className = "count full";
 				} else if (!nameToCount[k]) {
 					this.nameToCounter[k].className = "count empty";
+				} else {
+					this.nameToCounter[k].className = "count";
 				}
 			}
 		}
